@@ -15,7 +15,7 @@ def buscar_variavel(tabela, variavel, ano="2022"):
     """
     url = f"https://servicodados.ibge.gov.br/api/v3/agregados/{tabela}/periodos/{ano}/variaveis/{variavel}?localidades=N6[{CODIGOS}]"
     
-    print(f"   🌐 Consultando API: tabela {tabela}, variável {variavel}...")
+    print(f" Consultando API: tabela {tabela}, variável {variavel}...")
     
     resposta = requests.get(url)
     dados = resposta.json()
@@ -28,17 +28,17 @@ def buscar_variavel(tabela, variavel, ano="2022"):
     
     return resultado
 
-print("🌐 Buscando dados demográficos na API SIDRA do IBGE...")
+print("Buscando dados demográficos na API SIDRA do IBGE...")
 
 # Busca população total — tabela 9514, variável 93
 populacao = buscar_variavel("9514", "93")
-print(f"✅ População coletada para {len(populacao)} municípios")
+print(f"População coletada para {len(populacao)} municípios")
 
 # Conecta no banco
 conn = psycopg2.connect(conexao_string)
 cursor = conn.cursor()
 
-print("📥 Inserindo dados demográficos no banco...")
+print("Inserindo dados demográficos no banco...")
 
 for codigo, pop in populacao.items():
     # Trata valores que podem vir como string ou como "-"
@@ -58,10 +58,10 @@ for codigo, pop in populacao.items():
         pop_valor
     ))
     
-    print(f"   ✅ {codigo}: {pop_valor} habitantes")
+    print(f"{codigo}: {pop_valor} habitantes")
 
 conn.commit()
 cursor.close()
 conn.close()
 
-print("🎉 Dados demográficos inseridos com sucesso!")
+print("Dados demográficos inseridos com sucesso!")

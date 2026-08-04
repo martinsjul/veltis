@@ -6,7 +6,7 @@ import json
 # Conexão com o banco
 conexao_string = ""
 
-# Os 5 municípios da nossa amostra
+# Os 5 municípios da amostra
 MUNICIPIOS_AMOSTRA = {
     '3552205': 'Sorocaba',
     '3557006': 'Votorantim',
@@ -15,25 +15,25 @@ MUNICIPIOS_AMOSTRA = {
     '3550605': 'São Roque'
 }
 
-print("📂 Lendo Shapefile do IBGE...")
+print("Lendo Shapefile do IBGE")
 
 # Lê o shapefile direto do ZIP
 gdf = gpd.read_file(
     "zip://C:/Users/jmr94/Downloads/SP_Municipios_2025.zip!SP_Municipios_2025.shp"
 )
 
-print(f"✅ {len(gdf)} municípios carregados do estado de SP")
+print(f"{len(gdf)} municípios carregados do estado de SP")
 
 # Filtra só os 5 da amostra
 gdf_amostra = gdf[gdf['CD_MUN'].isin(MUNICIPIOS_AMOSTRA.keys())]
 
-print(f"✅ {len(gdf_amostra)} municípios da amostra filtrados")
+print(f"{len(gdf_amostra)} municípios da amostra filtrados")
 
 # Conecta no banco
 conn = psycopg2.connect(conexao_string)
 cursor = conn.cursor()
 
-print("📥 Inserindo municípios no banco...")
+print(" Inserindo municípios no banco")
 
 for _, row in gdf_amostra.iterrows():
     # Converte o polígono para GeoJSON
@@ -53,7 +53,7 @@ for _, row in gdf_amostra.iterrows():
         geom_geojson
     ))
     
-    print(f"   ✅ {row['NM_MUN']} inserido")
+    print(f"  {row['NM_MUN']} inserido")
 
 # Salva tudo no banco
 conn.commit()
@@ -61,4 +61,4 @@ conn.commit()
 cursor.close()
 conn.close()
 
-print("🎉 Municípios importados com sucesso!")
+print(" Municípios importados com sucesso!")

@@ -8,7 +8,7 @@ conexao_string = ""
 # Códigos dos 5 municípios da amostra
 CODIGOS_RM = ['3552205', '3557006', '3523909', '3554003', '3550605']
 
-# Colunas que vamos usar do CSV
+# Colunas do CSV
 COLUNAS = [
     'CO_ENTIDADE',      # código da escola
     'NO_ENTIDADE',      # nome da escola
@@ -32,7 +32,7 @@ DEPENDENCIA = {
     4: 'PRIVADA'
 }
 
-print("📂 Lendo CSV do INEP...")
+print("Lendo CSV do INEP")
 
 # Conecta no banco
 conn = psycopg2.connect(conexao_string)
@@ -96,10 +96,10 @@ with zipfile.ZipFile(caminho_zip, 'r') as z:
                 ))
                 
                 escolas_inseridas += 1
-                print(f"   ✅ {row['NO_ENTIDADE']}")
+                print(f" {row['NO_ENTIDADE']}")
 
 conn.commit()
 cursor.close()
 conn.close()
 
-print(f"\n🎉 {escolas_inseridas} escolas inseridas com sucesso!")
+print(f"\n{escolas_inseridas} escolas inseridas com sucesso!")

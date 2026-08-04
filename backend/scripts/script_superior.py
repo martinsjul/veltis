@@ -32,7 +32,7 @@ MODALIDADE = {
     2: 'EAD'
 }
 
-print("📂 Lendo arquivo de IES do MEC...")
+print("Lendo arquivo de IES do MEC")
 
 # Conecta no banco
 conn = psycopg2.connect(conexao_string)
@@ -52,8 +52,8 @@ with zipfile.ZipFile(caminho_zip, 'r') as z:
         # Pega 1 IES por município
         df_amostra = df_rm.groupby('CO_MUNICIPIO_IES').head(1)
         
-        print(f"✅ {len(df_amostra)} IES encontradas")
-        print("📥 Inserindo IES no banco...")
+        print(f"{len(df_amostra)} IES encontradas")
+        print("Inserindo IES no banco...")
         
         for _, row in df_amostra.iterrows():
             cursor.execute("""
@@ -73,17 +73,17 @@ with zipfile.ZipFile(caminho_zip, 'r') as z:
                 row['NO_BAIRRO_IES'] if pd.notna(row['NO_BAIRRO_IES']) else None,
                 str(int(row['NU_CEP_IES'])) if pd.notna(row['NU_CEP_IES']) else None
             ))
-            print(f"   ✅ {row['NO_IES']}")
+            print(f" {row['NO_IES']}")
 
 conn.commit()
-print("✅ IES inseridas!")
+print("IES inseridas!")
 
 # ========================
 # PASSO 2: Inserir cursos
 # ========================
-print("\n📂 Lendo arquivo de cursos do MEC...")
+print("\n Lendo arquivo de cursos do MEC...")
 
-# Busca os IDs das IES que acabamos de inserir
+# Busca os IDs das IES 
 cursor.execute("SELECT id, codigo_ies FROM instituicao WHERE tipo = 'SUPERIOR'")
 ies_no_banco = {row[1]: row[0] for row in cursor.fetchall()}
 
@@ -97,7 +97,7 @@ with zipfile.ZipFile(caminho_zip, 'r') as z:
         for chunk in pd.read_csv(f, sep=';', encoding='latin1',
                                   low_memory=False, chunksize=10000):
             
-            # Filtra só cursos das IES que inserimos
+            # Filtra só cursos das IES 
             filtrado = chunk[chunk['CO_IES'].isin(co_ies_lista)]
             
             # Filtra só cursos ativos
@@ -137,5 +137,5 @@ conn.commit()
 cursor.close()
 conn.close()
 
-print(f"🎉 {cursos_inseridos} cursos inseridos com sucesso!")
-print("\n✅ Script de ensino superior finalizado!")
+print(f" {cursos_inseridos} cursos inseridos com sucesso!")
+print("\n Script de ensino superior finalizado!")
