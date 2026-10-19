@@ -19,7 +19,8 @@ Thumbs.db
 # Dados brutos e processados: reproduzíveis, não versionados
 backend/data/raw/**
 backend/data/processed/**
-!backend/data/raw/ibge/.gitkeep
+!backend/data/raw/**/
+!backend/data/raw/**/.gitkeep
 !backend/data/processed/.gitkeep
 
 # Logs / temporários

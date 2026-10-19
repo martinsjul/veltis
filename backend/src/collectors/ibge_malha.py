@@ -1,692 +1,190 @@
-import hashlib
-import re
+"""Pipeline 1 - IBGE Malha Municipal -> IBGE_MUNICIPIOS.
+
+Baixa o shapefile oficial de SP, recorta os 27 municípios da RMS,
+valida (quantidade, códigos, CRS, geometrias) e grava com upsert.
+
+Executar sozinho:  python -m src.collectors.ibge_malha [--forcar]
+"""
+
+import argparse
 import shutil
 import zipfile
-from datetime import datetime
 from pathlib import Path
 
 import geopandas as gpd
-import requests
-from geoalchemy2 import Geometry
 from shapely.geometry import MultiPolygon
-from sqlalchemy import text
 
+from src.collectors.download import baixar_arquivo
+from src.config.edicoes import ANO_MALHA, URL_MALHA, URL_PAGINA_MALHA
 from src.config.rms import CODIGOS_RMS
-from src.database import engine
+from src.loaders.carga import para_registros, upsert
+from src.loaders.ingestao import Fonte, carga, hash_arquivo
 
-
-# ============================================================
-# CONFIGURAÇÕES
-# ============================================================
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-
 DATA_DIR = BASE_DIR / "data" / "raw" / "ibge"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-URL_BASE_IBGE = (
-    "https://geoftp.ibge.gov.br/"
-    "organizacao_do_territorio/malhas_territoriais/"
-    "malhas_municipais"
+FONTE = Fonte(
+    orgao="IBGE",
+    nome="Malha Municipal",
+    url_oficial=URL_PAGINA_MALHA,
+    periodicidade="Anual",
+    observacao="Malha territorial oficial utilizada pelo Veltis.",
 )
 
-
-# ============================================================
-# DESCOBRIR EDIÇÃO MAIS RECENTE
-# ============================================================
-
-def descobrir_ano_mais_recente() -> int:
-    print("Consultando edições disponíveis no IBGE...")
-
-    resposta = requests.get(
-        f"{URL_BASE_IBGE}/",
-        timeout=60,
-    )
-
-    resposta.raise_for_status()
-
-    anos = re.findall(
-        r"municipio_(\d{4})/",
-        resposta.text,
-    )
-
-    if not anos:
-        raise RuntimeError(
-            "Nenhuma edição da Malha Municipal foi encontrada."
-        )
-
-    anos = [int(ano) for ano in anos]
-
-    ano_mais_recente = max(anos)
-
-    print(
-        f"Edição mais recente encontrada: {ano_mais_recente}"
-    )
-
-    return ano_mais_recente
-
-
-# ============================================================
-# DOWNLOAD
-# ============================================================
-
-def baixar_malha(ano: int) -> tuple[Path, str]:
-    nome_zip = f"SP_Municipios_{ano}.zip"
-
-    url = (
-        f"{URL_BASE_IBGE}/"
-        f"municipio_{ano}/UFs/SP/"
-        f"{nome_zip}"
-    )
-
-    caminho_final = DATA_DIR / nome_zip
-    caminho_temporario = DATA_DIR / f"{nome_zip}.tmp"
-
-    print(f"Baixando Malha Municipal {ano} de São Paulo...")
-
-    resposta = requests.get(
-        url,
-        stream=True,
-        timeout=180,
-    )
-
-    resposta.raise_for_status()
-
-    with caminho_temporario.open("wb") as arquivo:
-        for bloco in resposta.iter_content(
-            chunk_size=1024 * 1024
-        ):
-            if bloco:
-                arquivo.write(bloco)
-
-    print("Download concluído.")
-
-    return caminho_temporario, url
-
-
-# ============================================================
-# HASH SHA-256
-# ============================================================
-
-def calcular_hash(caminho: Path) -> str:
-    sha256 = hashlib.sha256()
-
-    with caminho.open("rb") as arquivo:
-        for bloco in iter(
-            lambda: arquivo.read(1024 * 1024),
-            b"",
-        ):
-            sha256.update(bloco)
-
-    return sha256.hexdigest()
-
-
-# ============================================================
-# FONTE DE DADOS
-# ============================================================
-
-def obter_id_fonte(conexao) -> int:
-    resultado = conexao.execute(
-        text(
-            """
-            SELECT id_fonte
-            FROM fonte_dados
-            WHERE no_orgao = 'IBGE'
-              AND no_fonte = 'Malha Municipal'
-            LIMIT 1
-            """
-        )
-    ).scalar()
-
-    if resultado is not None:
-        return resultado
-
-    resultado = conexao.execute(
-        text(
-            """
-            INSERT INTO fonte_dados (
-                no_orgao,
-                no_fonte,
-                ds_url_oficial,
-                ds_periodicidade,
-                ds_tipo_fonte,
-                ds_observacao
-            )
-            VALUES (
-                'IBGE',
-                'Malha Municipal',
-                :url,
-                'Anual',
-                'OFICIAL_PRINCIPAL',
-                'Malha territorial oficial utilizada pelo Veltis.'
-            )
-            RETURNING id_fonte
-            """
-        ),
-        {
-            "url": f"{URL_BASE_IBGE}/"
-        },
-    )
-
-    return resultado.scalar_one()
-
-
-# ============================================================
-# VERIFICAR SE A VERSÃO JÁ FOI PROCESSADA
-# ============================================================
-
-def hash_ja_processado(
-    conexao,
-    id_fonte: int,
-    hash_arquivo: str,
-) -> bool:
-
-    resultado = conexao.execute(
-        text(
-            """
-            SELECT 1
-            FROM controle_ingestao
-            WHERE id_fonte = :id_fonte
-              AND ds_hash_sha256 = :hash
-              AND ds_status = 'CONCLUIDA'
-            LIMIT 1
-            """
-        ),
-        {
-            "id_fonte": id_fonte,
-            "hash": hash_arquivo,
-        },
-    ).first()
-
-    return resultado is not None
+COLUNAS = [
+    "CD_MUN", "NM_MUN", "CD_RGI", "NM_RGI", "CD_RGINT", "NM_RGINT",
+    "CD_UF", "NM_UF", "SIGLA_UF", "CD_REGIAO", "NM_REGIAO", "SIGLA_RG",
+    "CD_CONCURB", "NM_CONCURB", "AREA_KM2", "geometry",
+]
 
 
 # ============================================================
 # EXTRAÇÃO
 # ============================================================
 
-def extrair_malha(
-    caminho_zip: Path,
-    ano: int,
-) -> Path:
+def extrair_malha(caminho_zip: Path, ano: int) -> Path:
+    pasta = DATA_DIR / f"municipios_{ano}"
 
-    pasta_extraida = DATA_DIR / f"municipios_{ano}"
+    if pasta.exists():
+        shutil.rmtree(pasta)
 
-    if pasta_extraida.exists():
-        shutil.rmtree(pasta_extraida)
+    pasta.mkdir(parents=True, exist_ok=True)
 
-    pasta_extraida.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    with zipfile.ZipFile(caminho_zip) as arquivo_zip:
+        arquivo_zip.extractall(pasta)
 
-    print("Extraindo arquivo...")
-
-    with zipfile.ZipFile(
-        caminho_zip,
-        "r",
-    ) as arquivo_zip:
-
-        arquivo_zip.extractall(pasta_extraida)
-
-    shapefiles = list(
-        pasta_extraida.rglob("*.shp")
-    )
+    shapefiles = list(pasta.rglob("*.shp"))
 
     if len(shapefiles) != 1:
         raise RuntimeError(
-            "Era esperado exatamente 1 arquivo SHP, "
-            f"mas foram encontrados {len(shapefiles)}."
+            f"Era esperado exatamente 1 arquivo SHP, mas foram encontrados {len(shapefiles)}."
         )
 
     return shapefiles[0]
 
 
 # ============================================================
-# PROCESSAMENTO E VALIDAÇÃO
+# PROCESSAMENTO E VALIDAÇÃO (mesmas regras da versão original)
 # ============================================================
 
-def processar_malha(
-    caminho_shp: Path,
-) -> tuple[gpd.GeoDataFrame, int]:
-
-    print("Lendo arquivo com GeoPandas...")
-
+def processar_malha(caminho_shp: Path) -> tuple[gpd.GeoDataFrame, int]:
     gdf = gpd.read_file(caminho_shp)
-
     quantidade_total = len(gdf)
 
-    print(
-        f"Municípios encontrados no arquivo de SP: "
-        f"{quantidade_total}"
-    )
+    print(f"Municípios no arquivo de SP: {quantidade_total}")
 
     if "CD_MUN" not in gdf.columns:
-        raise ValueError(
-            "A coluna CD_MUN não existe no arquivo."
-        )
+        raise ValueError("A coluna CD_MUN não existe no arquivo.")
 
-    gdf["CD_MUN"] = (
-        gdf["CD_MUN"]
-        .astype(str)
-        .str.strip()
-    )
-
-    gdf_rms = gdf[
-        gdf["CD_MUN"].isin(CODIGOS_RMS)
-    ].copy()
-
-    # --------------------------------------------------------
-    # Validação: quantidade
-    # --------------------------------------------------------
+    gdf["CD_MUN"] = gdf["CD_MUN"].astype(str).str.strip()
+    gdf_rms = gdf[gdf["CD_MUN"].isin(CODIGOS_RMS)].copy()
 
     if len(gdf_rms) != 27:
         raise ValueError(
-            "A RMS deve possuir exatamente 27 municípios. "
-            f"Foram encontrados {len(gdf_rms)}."
+            f"A RMS deve possuir exatamente 27 municípios. Foram encontrados {len(gdf_rms)}."
         )
 
-    # --------------------------------------------------------
-    # Validação: códigos
-    # --------------------------------------------------------
-
-    encontrados = set(gdf_rms["CD_MUN"])
-
-    faltantes = set(CODIGOS_RMS) - encontrados
-
+    faltantes = set(CODIGOS_RMS) - set(gdf_rms["CD_MUN"])
     if faltantes:
-        raise ValueError(
-            "Municípios da RMS não encontrados: "
-            f"{sorted(faltantes)}"
-        )
-
-    # --------------------------------------------------------
-    # Validação: duplicidade
-    # --------------------------------------------------------
+        raise ValueError(f"Municípios da RMS não encontrados: {sorted(faltantes)}")
 
     if gdf_rms["CD_MUN"].duplicated().any():
-        raise ValueError(
-            "Foram encontrados códigos de município duplicados."
-        )
-
-    # --------------------------------------------------------
-    # Validação: CRS
-    # --------------------------------------------------------
+        raise ValueError("Foram encontrados códigos de município duplicados.")
 
     if gdf_rms.crs is None:
-        raise ValueError(
-            "O arquivo não possui CRS definido."
-        )
+        raise ValueError("O arquivo não possui CRS definido.")
 
     if gdf_rms.crs.to_epsg() != 4674:
-        print(
-            f"Convertendo CRS {gdf_rms.crs} "
-            "para EPSG:4674..."
-        )
-
-        gdf_rms = gdf_rms.to_crs(
-            epsg=4674
-        )
-
-    # --------------------------------------------------------
-    # Validação: geometria
-    # --------------------------------------------------------
+        print(f"Convertendo CRS {gdf_rms.crs} para EPSG:4674...")
+        gdf_rms = gdf_rms.to_crs(epsg=4674)
 
     if gdf_rms.geometry.isna().any():
-        raise ValueError(
-            "Existem municípios sem geometria."
-        )
-
+        raise ValueError("Existem municípios sem geometria.")
     if gdf_rms.geometry.is_empty.any():
-        raise ValueError(
-            "Existem geometrias vazias."
-        )
-
+        raise ValueError("Existem geometrias vazias.")
     if not gdf_rms.geometry.is_valid.all():
-        raise ValueError(
-            "Existem geometrias inválidas."
-        )
-
-    # --------------------------------------------------------
-    # Normalizar Polygon → MultiPolygon
-    # --------------------------------------------------------
+        raise ValueError("Existem geometrias inválidas.")
 
     gdf_rms["geometry"] = gdf_rms.geometry.apply(
-        lambda geometria:
-        MultiPolygon([geometria])
-        if geometria.geom_type == "Polygon"
-        else geometria
+        lambda g: MultiPolygon([g]) if g.geom_type == "Polygon" else g
     )
 
-    # --------------------------------------------------------
-    # Campos previstos no dicionário
-    # --------------------------------------------------------
+    faltando_colunas = [c for c in COLUNAS if c not in gdf_rms.columns]
+    if faltando_colunas:
+        raise ValueError(f"Colunas esperadas não encontradas: {faltando_colunas}")
 
-    colunas = [
-        "CD_MUN",
-        "NM_MUN",
-        "CD_RGI",
-        "NM_RGI",
-        "CD_RGINT",
-        "NM_RGINT",
-        "CD_UF",
-        "NM_UF",
-        "SIGLA_UF",
-        "CD_REGIAO",
-        "NM_REGIAO",
-        "SIGLA_RG",
-        "CD_CONCURB",
-        "NM_CONCURB",
-        "AREA_KM2",
-        "geometry",
-    ]
+    gdf_rms = gdf_rms[COLUNAS].copy()
+    gdf_rms.columns = [c.lower() for c in gdf_rms.columns]
 
-    colunas_faltantes = [
-        coluna
-        for coluna in colunas
-        if coluna not in gdf_rms.columns
-    ]
+    # Campos de texto vazios na fonte (ex.: concentração urbana) viram NULL.
+    for coluna in gdf_rms.columns:
+        if coluna not in ("geometry", "area_km2"):
+            gdf_rms[coluna] = gdf_rms[coluna].map(
+                lambda v: None if v is None or str(v).strip() == "" else str(v).strip()
+            )
 
-    if colunas_faltantes:
-        raise ValueError(
-            "Colunas esperadas não encontradas: "
-            f"{colunas_faltantes}"
-        )
-
-    gdf_rms = gdf_rms[colunas].copy()
-
-    # PostgreSQL criou os nomes em minúsculo
-    gdf_rms.columns = [
-        coluna.lower()
-        for coluna in gdf_rms.columns
-    ]
-
-    print(
-        "Validação concluída com sucesso: "
-        "27 municípios da RMS."
-    )
-
+    print("Validação concluída: 27 municípios da RMS.")
     return gdf_rms, quantidade_total
 
 
 # ============================================================
-# REGISTRAR INGESTÃO
+# CARGA
 # ============================================================
 
-def registrar_ingestao(
-    conexao,
-    id_fonte: int,
-    ano: int,
-    nome_arquivo: str,
-    hash_arquivo: str,
-    quantidade_lida: int,
-    quantidade_carregada: int,
-) -> None:
+def carregar_banco(ing, gdf_rms: gpd.GeoDataFrame) -> int:
+    tabela = gdf_rms.drop(columns="geometry").copy()
 
-    conexao.execute(
-        text(
-            """
-            INSERT INTO controle_ingestao (
-                id_fonte,
-                co_periodo_referencia,
-                ds_versao,
-                no_arquivo_origem,
-                dt_obtencao,
-                dt_processamento,
-                ds_hash_sha256,
-                qt_registros_lidos,
-                qt_registros_carregados,
-                qt_registros_rejeitados,
-                ds_status,
-                ds_observacao
-            )
-            VALUES (
-                :id_fonte,
-                :periodo,
-                :versao,
-                :arquivo,
-                CURRENT_DATE,
-                :processamento,
-                :hash,
-                :lidos,
-                :carregados,
-                0,
-                'CONCLUIDA',
-                :observacao
-            )
-            """
-        ),
-        {
-            "id_fonte": id_fonte,
-            "periodo": str(ano),
-            "versao": f"Malha Municipal {ano}",
-            "arquivo": nome_arquivo,
-            "processamento": datetime.now(),
-            "hash": hash_arquivo,
-            "lidos": quantidade_lida,
-            "carregados": quantidade_carregada,
-            "observacao": (
-                "Malha de SP filtrada para os "
-                "27 municípios da RMS."
-            ),
+    # A geometria vai como WKB em hexadecimal; o PostGIS reconstrói.
+    # Isso dispensa a tabela de estágio no schema público.
+    tabela["geometry"] = gdf_rms.geometry.to_wkb(hex=True)
+    tabela["id_ingestao"] = ing.id_ingestao
+
+    return upsert(
+        ing.conexao,
+        "ibge_municipios",
+        para_registros(tabela),
+        chave=["cd_mun"],
+        expressoes={
+            "geometry": "ST_Multi(ST_SetSRID(ST_GeomFromWKB(decode(:geometry, 'hex')), 4674))",
         },
     )
 
 
 # ============================================================
-# CARGA NO POSTGRESQL / POSTGIS
+# PIPELINE
 # ============================================================
 
-def carregar_banco(
-    gdf_rms: gpd.GeoDataFrame,
-    ano: int,
-    hash_arquivo: str,
-    quantidade_lida: int,
-    nome_arquivo: str,
-) -> None:
+def executar_pipeline(forcar: bool = False) -> None:
+    print("\n=== IBGE - MALHA MUNICIPAL ===")
 
-    print("Enviando dados para o Supabase/PostGIS...")
+    nome_zip = f"SP_Municipios_{ANO_MALHA}.zip"
+    caminho_zip = baixar_arquivo(URL_MALHA, DATA_DIR / nome_zip, forcar=forcar)
+    hash_ = hash_arquivo(caminho_zip)
 
-    tabela_temporaria = "_stg_ibge_municipios"
-
-    with engine.begin() as conexao:
-
-        id_fonte = obter_id_fonte(conexao)
-
-        # ----------------------------------------------------
-        # Tabela temporária de estágio
-        # ----------------------------------------------------
-
-        gdf_rms.to_postgis(
-            name=tabela_temporaria,
-            con=conexao,
-            if_exists="replace",
-            index=False,
-            dtype={
-                "geometry": Geometry(
-                    geometry_type="MULTIPOLYGON",
-                    srid=4674,
-                )
-            },
-        )
-
-        # ----------------------------------------------------
-        # UPSERT
-        # ----------------------------------------------------
-
-        conexao.execute(
-            text(
-                f"""
-                INSERT INTO ibge_municipios (
-                    cd_mun,
-                    nm_mun,
-                    cd_rgi,
-                    nm_rgi,
-                    cd_rgint,
-                    nm_rgint,
-                    cd_uf,
-                    nm_uf,
-                    sigla_uf,
-                    cd_regiao,
-                    nm_regiao,
-                    sigla_rg,
-                    cd_concurb,
-                    nm_concurb,
-                    area_km2,
-                    geometry
-                )
-                SELECT
-                    cd_mun,
-                    nm_mun,
-                    cd_rgi,
-                    nm_rgi,
-                    cd_rgint,
-                    nm_rgint,
-                    cd_uf,
-                    nm_uf,
-                    sigla_uf,
-                    cd_regiao,
-                    nm_regiao,
-                    sigla_rg,
-                    cd_concurb,
-                    nm_concurb,
-                    area_km2,
-                    geometry
-                FROM {tabela_temporaria}
-
-                ON CONFLICT (cd_mun)
-
-                DO UPDATE SET
-                    nm_mun = EXCLUDED.nm_mun,
-                    cd_rgi = EXCLUDED.cd_rgi,
-                    nm_rgi = EXCLUDED.nm_rgi,
-                    cd_rgint = EXCLUDED.cd_rgint,
-                    nm_rgint = EXCLUDED.nm_rgint,
-                    cd_uf = EXCLUDED.cd_uf,
-                    nm_uf = EXCLUDED.nm_uf,
-                    sigla_uf = EXCLUDED.sigla_uf,
-                    cd_regiao = EXCLUDED.cd_regiao,
-                    nm_regiao = EXCLUDED.nm_regiao,
-                    sigla_rg = EXCLUDED.sigla_rg,
-                    cd_concurb = EXCLUDED.cd_concurb,
-                    nm_concurb = EXCLUDED.nm_concurb,
-                    area_km2 = EXCLUDED.area_km2,
-                    geometry = EXCLUDED.geometry;
-                """
-            )
-        )
-
-        conexao.execute(
-            text(
-                f"DROP TABLE {tabela_temporaria};"
-            )
-        )
-
-        registrar_ingestao(
-            conexao=conexao,
-            id_fonte=id_fonte,
-            ano=ano,
-            nome_arquivo=nome_arquivo,
-            hash_arquivo=hash_arquivo,
-            quantidade_lida=quantidade_lida,
-            quantidade_carregada=len(gdf_rms),
-        )
-
-    print(
-        "IBGE_MUNICIPIOS atualizada com sucesso."
-    )
-
-
-# ============================================================
-# PIPELINE PRINCIPAL
-# ============================================================
-
-def executar_pipeline() -> None:
-
-    print("")
-    print("========================================")
-    print("VELTIS - MALHA MUNICIPAL IBGE")
-    print("========================================")
-    print("")
-
-    # 1. Descobrir versão
-    ano = descobrir_ano_mais_recente()
-
-    # 2. Baixar
-    caminho_temporario, url = baixar_malha(ano)
-
-    # 3. Calcular hash
-    hash_arquivo = calcular_hash(
-        caminho_temporario
-    )
-
-    print(
-        f"SHA-256: {hash_arquivo}"
-    )
-
-    # 4. Verificar se já foi carregado
-    with engine.begin() as conexao:
-
-        id_fonte = obter_id_fonte(
-            conexao
-        )
-
-        if hash_ja_processado(
-            conexao,
-            id_fonte,
-            hash_arquivo,
-        ):
-            print("")
-            print(
-                "Essa versão já foi carregada anteriormente."
-            )
-            print(
-                "Nenhuma atualização é necessária."
-            )
-
-            caminho_temporario.unlink(
-                missing_ok=True
-            )
-
+    with carga(
+        FONTE,
+        periodo=str(ANO_MALHA),
+        versao=f"Malha Municipal {ANO_MALHA}",
+        arquivo=nome_zip,
+        hash_arquivo=hash_,
+        forcar=forcar,
+    ) as ing:
+        if ing is None:
             return
 
-    # 5. Salvar arquivo oficial
-    nome_zip = f"SP_Municipios_{ano}.zip"
+        caminho_shp = extrair_malha(caminho_zip, ANO_MALHA)
+        gdf_rms, quantidade_lida = processar_malha(caminho_shp)
+        carregados = carregar_banco(ing, gdf_rms)
 
-    caminho_final = DATA_DIR / nome_zip
-
-    caminho_temporario.replace(
-        caminho_final
-    )
-
-    # 6. Extrair
-    caminho_shp = extrair_malha(
-        caminho_final,
-        ano,
-    )
-
-    # 7. Processar e validar
-    gdf_rms, quantidade_lida = (
-        processar_malha(
-            caminho_shp
+        ing.registrar_contagens(
+            lidos=quantidade_lida,
+            carregados=carregados,
+            observacao="Malha de SP filtrada para os 27 municípios da RMS.",
         )
-    )
-
-    # 8. Carregar no banco
-    carregar_banco(
-        gdf_rms=gdf_rms,
-        ano=ano,
-        hash_arquivo=hash_arquivo,
-        quantidade_lida=quantidade_lida,
-        nome_arquivo=nome_zip,
-    )
-
-    print("")
-    print("========================================")
-    print("PIPELINE CONCLUÍDA")
-    print("========================================")
-    print("")
 
 
 if __name__ == "__main__":
-    executar_pipeline()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--forcar", action="store_true", help="recarrega mesmo sem mudança")
+    executar_pipeline(forcar=parser.parse_args().forcar)

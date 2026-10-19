@@ -1,7 +1,15 @@
-import hashlib
+"""Pipelines 3 e 4 - INEP Censo Escolar -> INEP_ESCOLA e INEP_CURSO_TECNICO.
+
+Os dois usam o MESMO pacote oficial (~537 MB), baixado uma vez:
+    Tabela_Escola_<ano>_V2.csv         -> INEP_ESCOLA
+    Tabela_Curso_Tecnico_<ano>_V2.csv  -> INEP_CURSO_TECNICO
+
+Executar sozinho:  python -m src.collectors.censo_escolar [--forcar]
+"""
+
+import argparse
 import re
 import zipfile
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -9,738 +17,328 @@ import requests
 from bs4 import BeautifulSoup
 from sqlalchemy import text
 
+from src.collectors.download import CABECALHOS, baixar_arquivo
+from src.config.edicoes import (
+    ANO_CENSO_ESCOLAR,
+    URL_CENSO_ESCOLAR,
+    URL_PAGINA_CENSO_ESCOLAR,
+)
 from src.config.rms import CODIGOS_RMS
-from src.database import engine
+from src.loaders.carga import para_registros, upsert
+from src.loaders.ingestao import Fonte, carga, hash_arquivo
+from src.transforms import codigos as conv
+from src.validators import basicos as validar
 
-
-# ============================================================
-# CONFIGURAÇÕES
-# ============================================================
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-
 DATA_DIR = BASE_DIR / "data" / "raw" / "inep" / "censo_escolar"
-DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-PAGINA_OFICIAL = (
-    "https://www.gov.br/inep/pt-br/"
-    "acesso-a-informacao/dados-abertos/"
-    "microdados/censo-escolar"
+FONTE = Fonte(
+    orgao="INEP",
+    nome="Censo Escolar",
+    url_oficial=URL_PAGINA_CENSO_ESCOLAR,
+    periodicidade="Anual",
+    observacao="Fonte mestre das escolas de educação básica do Veltis.",
 )
 
+COLUNAS_ESCOLA = [
+    "NU_ANO_CENSO", "CO_ENTIDADE", "NO_ENTIDADE", "CO_MUNICIPIO",
+    "NO_MUNICIPIO", "SG_UF", "TP_DEPENDENCIA", "TP_LOCALIZACAO",
+    "TP_SITUACAO_FUNCIONAMENTO", "IN_COMUM_MEDIO_MEDIO",
+    "IN_COMUM_MEDIO_INTEGRADO", "IN_COMUM_MEDIO_FIC",
+    "IN_COMUM_MEDIO_NORMAL", "IN_ITINERARIO_TECN_PROF",
+]
 
-# ============================================================
-# DESCOBRIR EDIÇÃO MAIS RECENTE
-# ============================================================
+INDICADORES_ESCOLA = [c for c in COLUNAS_ESCOLA if c.startswith("IN_")]
 
-def descobrir_edicao() -> tuple[int, str]:
-
-    print("Consultando página oficial do Censo Escolar...")
-
-    resposta = requests.get(
-        PAGINA_OFICIAL,
-        timeout=60,
-    )
-
-    resposta.raise_for_status()
-
-    soup = BeautifulSoup(
-        resposta.text,
-        "html.parser",
-    )
-
-    edicoes = []
-
-    for link in soup.find_all("a", href=True):
-
-        texto = link.get_text(
-            " ",
-            strip=True,
-        )
-
-        href = link["href"]
-
-        if "Microdados do Censo Escolar" not in texto:
-            continue
-
-        match = re.search(
-            r"\b(20\d{2})\b",
-            texto,
-        )
-
-        if not match:
-            continue
-
-        ano = int(match.group(1))
-
-        if "download.inep.gov.br" not in href:
-            continue
-
-        edicoes.append(
-            (ano, href)
-        )
-
-    if not edicoes:
-        raise RuntimeError(
-            "Nenhum pacote do Censo Escolar "
-            "foi encontrado na página oficial."
-        )
-
-    ano, url = max(
-        edicoes,
-        key=lambda item: item[0],
-    )
-
-    print(
-        f"Edição mais recente encontrada: {ano}"
-    )
-
-    return ano, url
+COLUNAS_CURSO = [
+    "NU_ANO_CENSO", "CO_ENTIDADE", "CO_MUNICIPIO", "NO_MUNICIPIO",
+    "CO_CURSO_EDUC_PROFISSIONAL", "NO_CURSO_EDUC_PROFISSIONAL",
+    "ID_AREA_CURSO_PROFISSIONAL", "NO_AREA_CURSO_PROFISSIONAL",
+    "QT_CURSO_TEC", "QT_MAT_CURSO_TEC",
+]
 
 
 # ============================================================
-# DOWNLOAD
+# PACOTE OFICIAL
 # ============================================================
 
-def baixar_pacote(
-    ano: int,
-    url: str,
-) -> Path:
+def descobrir_url(ano: int) -> str:
+    """Procura na página do INEP o link do ano configurado.
 
-    caminho = (
-        DATA_DIR
-        / f"microdados_censo_escolar_{ano}.zip"
-    )
+    Se a página mudar ou estiver fora do ar, usa a URL fixa da config.
+    """
 
-    caminho_tmp = caminho.with_suffix(".zip.tmp")
+    try:
+        resposta = requests.get(URL_PAGINA_CENSO_ESCOLAR, headers=CABECALHOS, timeout=60)
+        resposta.raise_for_status()
+        soup = BeautifulSoup(resposta.text, "html.parser")
 
-    print(
-        f"Baixando Censo Escolar {ano}..."
-    )
+        for link in soup.find_all("a", href=True):
+            texto = link.get_text(" ", strip=True)
+            href = link["href"]
 
-    sessao = requests.Session()
+            if (
+                "Microdados do Censo Escolar" in texto
+                and re.search(rf"\b{ano}\b", texto)
+                and "download.inep.gov.br" in href
+            ):
+                return href
 
-    sessao.headers.update(
-        {
-            "User-Agent": (
-                "Mozilla/5.0 "
-                "(Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 "
-                "(KHTML, like Gecko) "
-                "Chrome/153.0 Safari/537.36"
-            ),
-            "Accept": (
-                "text/html,application/xhtml+xml,"
-                "application/xml;q=0.9,*/*;q=0.8"
-            ),
-            "Referer": PAGINA_OFICIAL,
-        }
-    )
+        print(f"Link de {ano} não encontrado na página; usando a URL configurada.")
+    except requests.RequestException as erro:
+        print(f"Página do INEP indisponível ({erro}); usando a URL configurada.")
 
-    tentativas = 3
-
-    for tentativa in range(
-        1,
-        tentativas + 1,
-    ):
-
-        try:
-
-            print(
-                f"Tentativa {tentativa}/{tentativas}..."
-            )
-
-            resposta = sessao.get(
-                url,
-                stream=True,
-                timeout=(30, 300),
-            )
-
-            resposta.raise_for_status()
-
-            with caminho_tmp.open("wb") as arquivo:
-
-                for bloco in resposta.iter_content(
-                    chunk_size=1024 * 1024
-                ):
-
-                    if bloco:
-                        arquivo.write(bloco)
-
-            caminho_tmp.replace(caminho)
-
-            print("Download concluído.")
-
-            return caminho
-
-        except requests.RequestException as erro:
-
-            print(
-                f"Falha no download: {erro}"
-            )
-
-            caminho_tmp.unlink(
-                missing_ok=True
-            )
-
-            if tentativa == tentativas:
-                raise RuntimeError(
-                    "O servidor do INEP não respondeu "
-                    "após 3 tentativas."
-                ) from erro
+    return URL_CENSO_ESCOLAR
 
 
-# ============================================================
-# HASH
-# ============================================================
-
-def calcular_hash(
-    caminho: Path,
-) -> str:
-
-    sha256 = hashlib.sha256()
-
-    with caminho.open("rb") as arquivo:
-
-        for bloco in iter(
-            lambda: arquivo.read(
-                1024 * 1024
-            ),
-            b"",
-        ):
-            sha256.update(bloco)
-
-    return sha256.hexdigest()
+def obter_pacote(forcar: bool = False) -> Path:
+    url = descobrir_url(ANO_CENSO_ESCOLAR)
+    destino = DATA_DIR / f"microdados_censo_escolar_{ANO_CENSO_ESCOLAR}.zip"
+    return baixar_arquivo(url, destino, forcar=forcar)
 
 
-# ============================================================
-# LOCALIZAR TABELA DE ESCOLAS
-# ============================================================
-
-def localizar_csv_escolas(
-    caminho_zip: Path,
-) -> str:
-
-    with zipfile.ZipFile(
-        caminho_zip,
-        "r",
-    ) as pacote:
-
+def localizar_csv(caminho_zip: Path, prefixo: str) -> str:
+    with zipfile.ZipFile(caminho_zip) as pacote:
         candidatos = [
-            nome
-            for nome in pacote.namelist()
-            if re.search(
-                r"Tabela_Escola_.*\.csv$",
-                nome,
-                re.IGNORECASE,
-            )
+            nome for nome in pacote.namelist()
+            if re.search(rf"{prefixo}_.*\.csv$", nome, re.IGNORECASE)
         ]
 
     if len(candidatos) != 1:
         raise RuntimeError(
-            "Esperávamos exatamente uma "
-            "Tabela_Escola no pacote, "
-            f"mas encontramos {len(candidatos)}."
+            f"Esperávamos exatamente um arquivo {prefixo} no pacote, "
+            f"mas encontramos {len(candidatos)}: {candidatos}"
         )
-
-    print(
-        "Arquivo de escolas encontrado:"
-    )
-    print(candidatos[0])
 
     return candidatos[0]
 
 
-# ============================================================
-# LER CSV
-# ============================================================
+def ler_csv(caminho_zip: Path, nome_csv: str, colunas: list[str]) -> pd.DataFrame:
+    """Lê só as colunas usadas, tudo como texto (latin-1, separador ;)."""
 
-def ler_escolas(
-    caminho_zip: Path,
-    nome_csv: str,
-) -> pd.DataFrame:
+    with zipfile.ZipFile(caminho_zip) as pacote:
+        with pacote.open(nome_csv) as arquivo:
+            cabecalho = arquivo.readline().decode("latin-1").strip().split(";")
 
-    print("Lendo tabela de escolas...")
-
-    with zipfile.ZipFile(
-        caminho_zip,
-        "r",
-    ) as pacote:
+        validar.colunas_presentes(pd.DataFrame(columns=cabecalho), colunas, nome_csv)
 
         with pacote.open(nome_csv) as arquivo:
-
             df = pd.read_csv(
                 arquivo,
                 sep=";",
                 encoding="latin-1",
-                low_memory=False,
+                usecols=colunas,
+                dtype=str,
+                keep_default_na=False,
             )
 
-    print(
-        f"Registros nacionais lidos: {len(df)}"
-    )
-
+    print(f"{Path(nome_csv).name}: {len(df)} registros nacionais lidos.")
     return df
 
 
 # ============================================================
-# TRANSFORMAR E VALIDAR
+# ESCOLAS
 # ============================================================
 
-def processar_escolas(
-    df: pd.DataFrame,
-    ano: int,
-) -> pd.DataFrame:
+def processar_escolas(df: pd.DataFrame, ano: int) -> pd.DataFrame:
+    origem = "Tabela_Escola"
 
-    colunas = [
-        "NU_ANO_CENSO",
-        "CO_ENTIDADE",
-        "NO_ENTIDADE",
-        "CO_MUNICIPIO",
-        "NO_MUNICIPIO",
-        "SG_UF",
-        "TP_DEPENDENCIA",
-        "TP_LOCALIZACAO",
-        "TP_SITUACAO_FUNCIONAMENTO",
-        "IN_COMUM_MEDIO_MEDIO",
-        "IN_COMUM_MEDIO_INTEGRADO",
-        "IN_COMUM_MEDIO_FIC",
-        "IN_COMUM_MEDIO_NORMAL",
-        "IN_ITINERARIO_TECN_PROF",
-    ]
+    validar.colunas_presentes(df, COLUNAS_ESCOLA, origem)
+    df = df[COLUNAS_ESCOLA].copy()
 
-    faltantes = [
-        coluna
-        for coluna in colunas
-        if coluna not in df.columns
-    ]
+    df["CO_MUNICIPIO"] = conv.codigo_municipio(df["CO_MUNICIPIO"])
+    df = df[df["CO_MUNICIPIO"].isin(CODIGOS_RMS)].copy()
+    validar.nao_vazio(df, origem)
 
-    if faltantes:
-        raise ValueError(
-            "O arquivo mudou de estrutura. "
-            "Colunas esperadas não encontradas: "
-            f"{faltantes}"
-        )
-
-    df = df[colunas].copy()
-
-    df["CO_MUNICIPIO"] = (
-        df["CO_MUNICIPIO"]
-        .astype(str)
-        .str.replace(r"\.0$", "", regex=True)
-        .str.zfill(7)
-    )
-
-    df_rms = df[
-        df["CO_MUNICIPIO"].isin(
-            CODIGOS_RMS
-        )
-    ].copy()
-
-    if df_rms.empty:
-        raise ValueError(
-            "Nenhuma escola da RMS foi encontrada."
-        )
-
-    if (
-        df_rms["CO_MUNICIPIO"]
-        .isin(CODIGOS_RMS)
-        .all()
-        is False
-    ):
-        raise ValueError(
-            "Foram encontrados municípios "
-            "fora do recorte da RMS."
-        )
-
-    if df_rms[
-        [
-            "NU_ANO_CENSO",
-            "CO_ENTIDADE",
-        ]
-    ].duplicated().any():
-        raise ValueError(
-            "Existem escolas duplicadas "
-            "para o mesmo ano e código INEP."
-        )
-
-    anos = set(
-        df_rms["NU_ANO_CENSO"]
-        .dropna()
-        .astype(int)
-    )
-
-    if anos != {ano}:
-        raise ValueError(
-            "Ano encontrado no arquivo "
-            f"não corresponde à edição {ano}: "
-            f"{sorted(anos)}"
-        )
-
-    # Converte indicadores 0/1 para boolean.
-    colunas_booleanas = [
-        "IN_COMUM_MEDIO_MEDIO",
-        "IN_COMUM_MEDIO_INTEGRADO",
-        "IN_COMUM_MEDIO_FIC",
-        "IN_COMUM_MEDIO_NORMAL",
-        "IN_ITINERARIO_TECN_PROF",
-    ]
-
-    for coluna in colunas_booleanas:
-
-        df_rms[coluna] = (
-            df_rms[coluna]
-            .map(
-                {
-                    0: False,
-                    1: True,
-                    0.0: False,
-                    1.0: True,
-                }
-            )
-        )
-
-    df_rms.columns = [
-        coluna.lower()
-        for coluna in df_rms.columns
-    ]
-
-    print(
-        "Escolas encontradas na RMS: "
-        f"{len(df_rms)}"
-    )
-
-    print(
-        "Validação concluída com sucesso."
-    )
-
-    return df_rms
-
-
-# ============================================================
-# FONTE
-# ============================================================
-
-def obter_id_fonte(
-    conexao,
-) -> int:
-
-    resultado = conexao.execute(
-        text(
-            """
-            SELECT id_fonte
-            FROM fonte_dados
-            WHERE no_orgao = 'INEP'
-              AND no_fonte = 'Censo Escolar'
-            LIMIT 1
-            """
-        )
-    ).scalar()
-
-    if resultado is not None:
-        return resultado
-
-    return conexao.execute(
-        text(
-            """
-            INSERT INTO fonte_dados (
-                no_orgao,
-                no_fonte,
-                ds_url_oficial,
-                ds_periodicidade,
-                ds_tipo_fonte,
-                ds_observacao
-            )
-            VALUES (
-                'INEP',
-                'Censo Escolar',
-                :url,
-                'Anual',
-                'OFICIAL_PRINCIPAL',
-                'Fonte mestre das escolas '
-                'de educação básica do Veltis.'
-            )
-            RETURNING id_fonte
-            """
-        ),
+    saida = pd.DataFrame(
         {
-            "url": PAGINA_OFICIAL
-        },
-    ).scalar_one()
-
-
-# ============================================================
-# HASH JÁ PROCESSADO
-# ============================================================
-
-def hash_ja_processado(
-    conexao,
-    id_fonte: int,
-    hash_arquivo: str,
-) -> bool:
-
-    resultado = conexao.execute(
-        text(
-            """
-            SELECT 1
-            FROM controle_ingestao
-            WHERE id_fonte = :id_fonte
-              AND ds_hash_sha256 = :hash
-              AND ds_status = 'CONCLUIDA'
-            LIMIT 1
-            """
-        ),
-        {
-            "id_fonte": id_fonte,
-            "hash": hash_arquivo,
-        },
-    ).first()
-
-    return resultado is not None
-
-
-# ============================================================
-# CARGA
-# ============================================================
-
-def carregar_banco(
-    df: pd.DataFrame,
-    ano: int,
-    hash_arquivo: str,
-    nome_arquivo: str,
-    quantidade_lida: int,
-) -> None:
-
-    registros = (
-        df.where(
-            pd.notnull(df),
-            None,
-        )
-        .to_dict(
-            orient="records"
-        )
+            "nu_ano_censo": conv.para_inteiro(df["NU_ANO_CENSO"]),
+            "co_entidade": conv.para_inteiro(df["CO_ENTIDADE"]),
+            "no_entidade": conv.para_texto(df["NO_ENTIDADE"], 255),
+            "co_municipio": df["CO_MUNICIPIO"],
+            "no_municipio": conv.para_texto(df["NO_MUNICIPIO"], 150),
+            "sg_uf": conv.para_texto(df["SG_UF"], 2),
+            "tp_dependencia": conv.para_inteiro(df["TP_DEPENDENCIA"]),
+            "tp_localizacao": conv.para_inteiro(df["TP_LOCALIZACAO"]),
+            "tp_situacao_funcionamento": conv.para_inteiro(df["TP_SITUACAO_FUNCIONAMENTO"]),
+        }
     )
 
-    with engine.begin() as conexao:
+    # Indicadores 0/1. Vazio = "não se aplica" (escola paralisada ou extinta).
+    for coluna in INDICADORES_ESCOLA:
+        saida[coluna.lower()] = conv.para_booleano(df[coluna])
 
-        id_fonte = obter_id_fonte(
-            conexao
-        )
+    validar.apenas_rms(saida["co_municipio"], origem)
+    validar.sem_duplicidade(saida, ["nu_ano_censo", "co_entidade"], origem)
+    validar.sem_nulos(
+        saida,
+        ["nu_ano_censo", "co_entidade", "no_entidade", "co_municipio",
+         "no_municipio", "sg_uf", "tp_dependencia", "tp_localizacao",
+         "tp_situacao_funcionamento"],
+        origem,
+    )
+    validar.dominio(saida["nu_ano_censo"], [ano], origem)
+    validar.dominio(saida["tp_dependencia"], [1, 2, 3, 4], origem)
+    validar.dominio(saida["tp_localizacao"], [1, 2], origem)
+    validar.dominio(saida["tp_situacao_funcionamento"], [1, 2, 3, 4], origem)
 
-        if hash_ja_processado(
-            conexao,
-            id_fonte,
-            hash_arquivo,
-        ):
+    print(f"Escolas na RMS: {len(saida)}")
+    return saida
 
-            print(
-                "Esta versão do Censo Escolar "
-                "já foi processada."
-            )
 
+def carregar_escolas(caminho_zip: Path, hash_: str, forcar: bool) -> None:
+    nome_csv = localizar_csv(caminho_zip, "Tabela_Escola")
+
+    with carga(
+        FONTE,
+        periodo=str(ANO_CENSO_ESCOLAR),
+        versao=f"Censo Escolar {ANO_CENSO_ESCOLAR} ({Path(nome_csv).stem})",
+        arquivo=Path(nome_csv).name,
+        hash_arquivo=hash_,
+        forcar=forcar,
+    ) as ing:
+        if ing is None:
             return
 
-        sql = text(
-            """
-            INSERT INTO inep_escola (
-                nu_ano_censo,
-                co_entidade,
-                no_entidade,
-                co_municipio,
-                no_municipio,
-                sg_uf,
-                tp_dependencia,
-                tp_localizacao,
-                tp_situacao_funcionamento,
-                in_comum_medio_medio,
-                in_comum_medio_integrado,
-                in_comum_medio_fic,
-                in_comum_medio_normal,
-                in_itinerario_tecn_prof
-            )
-            VALUES (
-                :nu_ano_censo,
-                :co_entidade,
-                :no_entidade,
-                :co_municipio,
-                :no_municipio,
-                :sg_uf,
-                :tp_dependencia,
-                :tp_localizacao,
-                :tp_situacao_funcionamento,
-                :in_comum_medio_medio,
-                :in_comum_medio_integrado,
-                :in_comum_medio_fic,
-                :in_comum_medio_normal,
-                :in_itinerario_tecn_prof
-            )
+        df = ler_csv(caminho_zip, nome_csv, COLUNAS_ESCOLA)
+        escolas = processar_escolas(df, ANO_CENSO_ESCOLAR)
+        escolas["id_ingestao"] = ing.id_ingestao
 
-            ON CONFLICT (
-                nu_ano_censo,
-                co_entidade
-            )
-
-            DO UPDATE SET
-                no_entidade =
-                    EXCLUDED.no_entidade,
-
-                co_municipio =
-                    EXCLUDED.co_municipio,
-
-                no_municipio =
-                    EXCLUDED.no_municipio,
-
-                sg_uf =
-                    EXCLUDED.sg_uf,
-
-                tp_dependencia =
-                    EXCLUDED.tp_dependencia,
-
-                tp_localizacao =
-                    EXCLUDED.tp_localizacao,
-
-                tp_situacao_funcionamento =
-                    EXCLUDED.tp_situacao_funcionamento,
-
-                in_comum_medio_medio =
-                    EXCLUDED.in_comum_medio_medio,
-
-                in_comum_medio_integrado =
-                    EXCLUDED.in_comum_medio_integrado,
-
-                in_comum_medio_fic =
-                    EXCLUDED.in_comum_medio_fic,
-
-                in_comum_medio_normal =
-                    EXCLUDED.in_comum_medio_normal,
-
-                in_itinerario_tecn_prof =
-                    EXCLUDED.in_itinerario_tecn_prof
-            """
+        carregados = upsert(
+            ing.conexao,
+            "inep_escola",
+            para_registros(escolas),
+            chave=["nu_ano_censo", "co_entidade"],
         )
 
-        conexao.execute(
-            sql,
-            registros,
+        ativas = int((escolas["tp_situacao_funcionamento"] == 1).sum())
+        ing.registrar_contagens(
+            lidos=len(df),
+            carregados=carregados,
+            observacao=f"Tabela de escolas filtrada para a RMS; {ativas} em atividade.",
         )
 
-        conexao.execute(
-            text(
-                """
-                INSERT INTO controle_ingestao (
-                    id_fonte,
-                    co_periodo_referencia,
-                    ds_versao,
-                    no_arquivo_origem,
-                    dt_obtencao,
-                    dt_processamento,
-                    ds_hash_sha256,
-                    qt_registros_lidos,
-                    qt_registros_carregados,
-                    qt_registros_rejeitados,
-                    ds_status,
-                    ds_observacao
-                )
-                VALUES (
-                    :id_fonte,
-                    :periodo,
-                    :versao,
-                    :arquivo,
-                    CURRENT_DATE,
-                    :processamento,
-                    :hash,
-                    :lidos,
-                    :carregados,
-                    0,
-                    'CONCLUIDA',
-                    :observacao
-                )
-                """
+
+# ============================================================
+# CURSOS TÉCNICOS
+# ============================================================
+
+def processar_cursos_tecnicos(
+    df: pd.DataFrame,
+    ano: int,
+    escolas_no_banco: set[int],
+) -> pd.DataFrame:
+    origem = "Tabela_Curso_Tecnico"
+
+    validar.colunas_presentes(df, COLUNAS_CURSO, origem)
+    df = df[COLUNAS_CURSO].copy()
+
+    df["CO_MUNICIPIO"] = conv.codigo_municipio(df["CO_MUNICIPIO"])
+    df = df[df["CO_MUNICIPIO"].isin(CODIGOS_RMS)].copy()
+    validar.nao_vazio(df, origem)
+
+    saida = pd.DataFrame(
+        {
+            "nu_ano_censo": conv.para_inteiro(df["NU_ANO_CENSO"]),
+            "co_entidade": conv.para_inteiro(df["CO_ENTIDADE"]),
+            "co_municipio": df["CO_MUNICIPIO"],
+            "no_municipio": conv.para_texto(df["NO_MUNICIPIO"], 150),
+            "co_curso_educ_profissional": conv.para_inteiro(df["CO_CURSO_EDUC_PROFISSIONAL"]),
+            "no_curso_educ_profissional": conv.para_texto(df["NO_CURSO_EDUC_PROFISSIONAL"], 255),
+            "id_area_curso_profissional": conv.para_inteiro(df["ID_AREA_CURSO_PROFISSIONAL"]),
+            "no_area_curso_profissional": conv.para_texto(df["NO_AREA_CURSO_PROFISSIONAL"], 255),
+            "qt_curso_tec": conv.para_inteiro(df["QT_CURSO_TEC"]),
+            "qt_mat_curso_tec": conv.para_inteiro(df["QT_MAT_CURSO_TEC"]),
+        }
+    )
+
+    validar.sem_duplicidade(
+        saida, ["nu_ano_censo", "co_entidade", "co_curso_educ_profissional"], origem
+    )
+    validar.sem_nulos(
+        saida,
+        ["nu_ano_censo", "co_entidade", "co_municipio", "no_municipio",
+         "co_curso_educ_profissional", "no_curso_educ_profissional"],
+        origem,
+    )
+    validar.dominio(saida["nu_ano_censo"], [ano], origem)
+
+    sem_escola = sorted(set(saida["co_entidade"]) - escolas_no_banco)
+    if sem_escola:
+        raise validar.ErroValidacao(
+            f"{origem}: {len(sem_escola)} escolas dos cursos não estão em INEP_ESCOLA "
+            f"(rode antes a carga de escolas). Exemplos: {sem_escola[:5]}"
+        )
+
+    if (saida[["qt_curso_tec", "qt_mat_curso_tec"]].dropna() < 0).any().any():
+        raise validar.ErroValidacao(f"{origem}: quantidades negativas.")
+
+    print(
+        f"Cursos técnicos na RMS: {len(saida)} linhas, "
+        f"{saida['co_entidade'].nunique()} escolas, "
+        f"{int(saida['qt_mat_curso_tec'].sum())} matrículas."
+    )
+    return saida
+
+
+def carregar_cursos_tecnicos(caminho_zip: Path, hash_: str, forcar: bool) -> None:
+    nome_csv = localizar_csv(caminho_zip, "Tabela_Curso_Tecnico")
+
+    with carga(
+        FONTE,
+        periodo=str(ANO_CENSO_ESCOLAR),
+        versao=f"Censo Escolar {ANO_CENSO_ESCOLAR} ({Path(nome_csv).stem})",
+        arquivo=Path(nome_csv).name,
+        hash_arquivo=hash_,
+        forcar=forcar,
+    ) as ing:
+        if ing is None:
+            return
+
+        escolas_no_banco = set(
+            ing.conexao.execute(
+                text("SELECT co_entidade FROM inep_escola WHERE nu_ano_censo = :ano"),
+                {"ano": ANO_CENSO_ESCOLAR},
+            ).scalars()
+        )
+
+        df = ler_csv(caminho_zip, nome_csv, COLUNAS_CURSO)
+        cursos = processar_cursos_tecnicos(df, ANO_CENSO_ESCOLAR, escolas_no_banco)
+        cursos["id_ingestao"] = ing.id_ingestao
+
+        carregados = upsert(
+            ing.conexao,
+            "inep_curso_tecnico",
+            para_registros(cursos),
+            chave=["nu_ano_censo", "co_entidade", "co_curso_educ_profissional"],
+        )
+
+        ing.registrar_contagens(
+            lidos=len(df),
+            carregados=carregados,
+            observacao=(
+                "Cursos de educação profissional das escolas da RMS. "
+                "Área 999 = Normal/Magistério."
             ),
-            {
-                "id_fonte": id_fonte,
-                "periodo": str(ano),
-                "versao": (
-                    f"Censo Escolar {ano}"
-                ),
-                "arquivo": nome_arquivo,
-                "processamento": (
-                    datetime.now()
-                ),
-                "hash": hash_arquivo,
-                "lidos": quantidade_lida,
-                "carregados": len(df),
-                "observacao": (
-                    "Tabela de escolas filtrada "
-                    "para os 27 municípios da RMS."
-                ),
-            },
         )
 
-    print(
-        "INEP_ESCOLA atualizada com sucesso."
-    )
-
 
 # ============================================================
-# PIPELINE PRINCIPAL
+# PIPELINE
 # ============================================================
 
-def executar_pipeline() -> None:
+def executar_pipeline(forcar: bool = False) -> None:
+    print("\n=== INEP - CENSO ESCOLAR ===")
 
-    print("")
-    print("========================================")
-    print("VELTIS - CENSO ESCOLAR / INEP")
-    print("========================================")
-    print("")
+    caminho_zip = obter_pacote(forcar=forcar)
+    hash_ = hash_arquivo(caminho_zip)
 
-    ano, url = descobrir_edicao()
-
-    caminho_zip = baixar_pacote(
-        ano,
-        url,
-    )
-
-    hash_arquivo = calcular_hash(
-        caminho_zip
-    )
-
-    print(
-        f"SHA-256: {hash_arquivo}"
-    )
-
-    nome_csv = localizar_csv_escolas(
-        caminho_zip
-    )
-
-    df = ler_escolas(
-        caminho_zip,
-        nome_csv,
-    )
-
-    quantidade_lida = len(df)
-
-    df_rms = processar_escolas(
-        df,
-        ano,
-    )
-
-    carregar_banco(
-        df=df_rms,
-        ano=ano,
-        hash_arquivo=hash_arquivo,
-        nome_arquivo=(
-            caminho_zip.name
-        ),
-        quantidade_lida=quantidade_lida,
-    )
-
-    print("")
-    print("========================================")
-    print("PIPELINE CENSO ESCOLAR CONCLUÍDA")
-    print("========================================")
-    print("")
+    carregar_escolas(caminho_zip, hash_, forcar)
+    carregar_cursos_tecnicos(caminho_zip, hash_, forcar)
 
 
 if __name__ == "__main__":
-    executar_pipeline()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--forcar", action="store_true")
+    executar_pipeline(forcar=parser.parse_args().forcar)

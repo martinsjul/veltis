@@ -1,8 +1,16 @@
-pandas
-geopandas
-sqlalchemy
-psycopg[binary]
-python-dotenv
-geoalchemy2
-requests
-beautifulsoup4
+# Versões testadas em 19/10/2026 (Python 3.11 ou mais novo).
+pandas==3.0.5
+geopandas==1.2.0
+shapely==2.2.0
+pyogrio==0.13.0
+pyproj==3.8.0
+SQLAlchemy==2.1.5
+psycopg[binary]==3.3.6
+python-dotenv==1.2.3
+requests==2.34.2
+certifi==2026.7.22
+beautifulsoup4==4.15.0
+openpyxl==3.1.5
+
+# Testes
+pytest==9.1.1

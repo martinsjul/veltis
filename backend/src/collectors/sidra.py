@@ -1,433 +1,197 @@
-import hashlib
+"""Pipeline 2 - IBGE SIDRA (API de Dados Agregados v3) -> IBGE_DEMOGRAFICO.
+
+Para cada indicador de src/config/indicadores_sidra.py:
+consulta a API para os 27 municípios, transforma cada valor
+(com suas classificações: sexo, idade...) em uma linha, valida e
+grava com upsert pela chave única da tabela demográfica.
+
+Executar sozinho:  python -m src.collectors.sidra [--forcar]
+"""
+
+import argparse
 import json
-from datetime import datetime
+from math import prod
 
-import requests
-from sqlalchemy import text
+import pandas as pd
 
+from src.collectors.download import obter_json
+from src.config.edicoes import URL_SIDRA
+from src.config.indicadores_sidra import INDICADORES_SIDRA
 from src.config.rms import CODIGOS_RMS
-from src.database import engine
+from src.loaders.carga import para_registros, upsert
+from src.loaders.ingestao import Fonte, carga, hash_json
+from src.transforms.sidra import chave_classificacao, classificacoes_json, converter_valor
+from src.validators import basicos as validar
 
 
-URL_BASE = "https://servicodados.ibge.gov.br/api/v3/agregados"
+FONTE = Fonte(
+    orgao="IBGE",
+    nome="SIDRA",
+    url_oficial=URL_SIDRA,
+    periodicidade="Variável",
+    observacao="API de Dados Agregados do IBGE.",
+)
 
-AGREGADO = "4709"
-VARIAVEL = "93"
-PERIODO = "2022"
+# A API recusa (HTTP 500) consultas acima de ~50 mil valores.
+LIMITE_VALORES = 40_000
 
 
-def montar_url() -> tuple[str, dict]:
-    municipios = ",".join(CODIGOS_RMS)
-
+def montar_consulta(indicador: dict) -> tuple[str, dict]:
     url = (
-        f"{URL_BASE}/"
-        f"{AGREGADO}/"
-        f"periodos/{PERIODO}/"
-        f"variaveis/{VARIAVEL}"
+        f"{URL_SIDRA}/{indicador['agregado']}"
+        f"/periodos/{'|'.join(indicador['periodos'])}"
+        f"/variaveis/{'|'.join(indicador['variaveis'])}"
     )
 
-    parametros = {
-        "localidades": f"N6[{municipios}]"
-    }
+    parametros = {"localidades": f"N6[{','.join(CODIGOS_RMS)}]"}
+
+    if indicador["classificacoes"]:
+        parametros["classificacao"] = "|".join(
+            f"{cid}[{','.join(categorias)}]"
+            for cid, categorias in indicador["classificacoes"].items()
+        )
 
     return url, parametros
 
 
-def consultar_sidra() -> list:
-    url, parametros = montar_url()
+def valores_esperados(indicador: dict) -> int:
+    """municípios x períodos x variáveis x combinações de categorias."""
 
-    print("Consultando SIDRA...")
-    print(f"Agregado: {AGREGADO}")
-    print(f"Variável: {VARIAVEL}")
-    print(f"Período: {PERIODO}")
+    combinacoes = prod(len(c) for c in indicador["classificacoes"].values()) or 1
 
-    resposta = requests.get(
-        url,
-        params=parametros,
-        timeout=120,
+    return (
+        len(CODIGOS_RMS)
+        * len(indicador["periodos"])
+        * len(indicador["variaveis"])
+        * combinacoes
     )
 
-    resposta.raise_for_status()
 
-    dados = resposta.json()
+def transformar(dados: list, indicador: dict) -> pd.DataFrame:
+    linhas = []
+
+    for variavel in dados:
+        for resultado in variavel["resultados"]:
+            classificacoes = resultado["classificacoes"]
+            chave = chave_classificacao(classificacoes)
+            js = json.dumps(classificacoes_json(classificacoes), ensure_ascii=False)
+
+            for serie in resultado["series"]:
+                cd_mun = serie["localidade"]["id"]
+
+                for periodo, bruto in serie["serie"].items():
+                    valor, simbolo = converter_valor(bruto, variavel["unidade"])
+
+                    linhas.append(
+                        {
+                            "cd_mun": cd_mun,
+                            "co_periodo": str(periodo),
+                            "cd_agregado": indicador["agregado"],
+                            "cd_variavel": str(variavel["id"]),
+                            "no_variavel": variavel["variavel"][:255],
+                            "ds_unidade": (variavel["unidade"] or "")[:100] or None,
+                            "ds_chave_classificacao": chave,
+                            "js_classificacoes": js,
+                            "vl_indicador": valor,
+                            "ds_valor_original": simbolo,
+                        }
+                    )
+
+    return pd.DataFrame(linhas)
+
+
+def validar_indicador(df: pd.DataFrame, indicador: dict) -> None:
+    origem = f"SIDRA {indicador['agregado']}"
+    esperado = valores_esperados(indicador)
+
+    if len(df) != esperado:
+        raise validar.ErroValidacao(
+            f"{origem}: esperados {esperado} valores, a API devolveu {len(df)}."
+        )
+
+    validar.apenas_rms(df["cd_mun"], origem)
+    validar.todos_municipios_rms(df["cd_mun"], origem)
+    validar.sem_duplicidade(
+        df,
+        ["cd_mun", "co_periodo", "cd_variavel", "ds_chave_classificacao"],
+        origem,
+    )
+
+    periodos = set(df["co_periodo"])
+    if periodos != set(indicador["periodos"]):
+        raise validar.ErroValidacao(
+            f"{origem}: períodos devolvidos {sorted(periodos)} "
+            f"diferentes dos pedidos {indicador['periodos']}."
+        )
+
+
+def carregar_indicador(indicador: dict, forcar: bool = False) -> None:
+    print(f"\nSIDRA {indicador['agregado']}: {indicador['descricao']}")
+
+    esperado = valores_esperados(indicador)
+    if esperado > LIMITE_VALORES:
+        raise ValueError(
+            f"Consulta da tabela {indicador['agregado']} teria {esperado} valores; "
+            f"o limite seguro é {LIMITE_VALORES}. Divida o indicador."
+        )
+
+    url, parametros = montar_consulta(indicador)
+    dados = obter_json(url, parametros)
 
     if not dados:
-        raise ValueError(
-            "A API do SIDRA não retornou dados."
-        )
+        raise ValueError(f"A API do SIDRA não retornou dados para {indicador['agregado']}.")
 
-    print("Consulta realizada com sucesso.")
-
-    return dados
-
-
-def calcular_hash(dados: list) -> str:
-    conteudo = json.dumps(
-        dados,
-        ensure_ascii=False,
-        sort_keys=True,
-    ).encode("utf-8")
-
-    return hashlib.sha256(conteudo).hexdigest()
-
-
-def obter_id_fonte(conexao) -> int:
-    resultado = conexao.execute(
-        text(
-            """
-            SELECT id_fonte
-            FROM fonte_dados
-            WHERE no_orgao = 'IBGE'
-              AND no_fonte = 'SIDRA'
-            LIMIT 1
-            """
-        )
-    ).scalar()
-
-    if resultado is not None:
-        return resultado
-
-    resultado = conexao.execute(
-        text(
-            """
-            INSERT INTO fonte_dados (
-                no_orgao,
-                no_fonte,
-                ds_url_oficial,
-                ds_periodicidade,
-                ds_tipo_fonte,
-                ds_observacao
-            )
-            VALUES (
-                'IBGE',
-                'SIDRA',
-                :url,
-                'Variável',
-                'OFICIAL_PRINCIPAL',
-                'API de Dados Agregados do IBGE.'
-            )
-            RETURNING id_fonte
-            """
-        ),
-        {
-            "url": URL_BASE
-        },
+    arquivo = (
+        f"API_SIDRA_{indicador['agregado']}"
+        f"_{'-'.join(indicador['variaveis'])}"
+        f"_{'-'.join(indicador['periodos'])}.json"
     )
 
-    return resultado.scalar_one()
-
-
-def hash_ja_processado(
-    conexao,
-    id_fonte: int,
-    hash_dados: str,
-) -> bool:
-
-    resultado = conexao.execute(
-        text(
-            """
-            SELECT 1
-            FROM controle_ingestao
-            WHERE id_fonte = :id_fonte
-              AND ds_hash_sha256 = :hash
-              AND ds_status = 'CONCLUIDA'
-            LIMIT 1
-            """
-        ),
-        {
-            "id_fonte": id_fonte,
-            "hash": hash_dados,
-        },
-    ).first()
-
-    return resultado is not None
-
-
-def transformar(dados: list) -> list[dict]:
-    registros = []
-
-    variavel = dados[0]
-
-    codigo_variavel = variavel["id"]
-    nome_variavel = variavel["variavel"]
-    unidade = variavel["unidade"]
-
-    resultados = variavel["resultados"]
-
-    for resultado in resultados:
-        classificacoes = resultado["classificacoes"]
-
-        if classificacoes:
-            raise ValueError(
-                "Esta consulta possui classificações. "
-                "Vamos tratá-las na próxima etapa."
-            )
-
-        for serie in resultado["series"]:
-            localidade = serie["localidade"]
-            valores = serie["serie"]
-
-            codigo_municipio = localidade["id"]
-
-            if codigo_municipio not in CODIGOS_RMS:
-                raise ValueError(
-                    f"Município inesperado: {codigo_municipio}"
-                )
-
-            if PERIODO not in valores:
-                raise ValueError(
-                    f"Período {PERIODO} não encontrado "
-                    f"para o município {codigo_municipio}."
-                )
-
-            valor_original = valores[PERIODO]
-
-            if valor_original in (
-                None,
-                "",
-                "-",
-                "...",
-            ):
-                valor = None
-            else:
-                valor = float(valor_original)
-
-            registros.append(
-                {
-                    "cd_mun": codigo_municipio,
-                    "co_periodo": PERIODO,
-                    "cd_agregado": AGREGADO,
-                    "cd_variavel": codigo_variavel,
-                    "no_variavel": nome_variavel,
-                    "ds_unidade": unidade,
-                    "vl_indicador": valor,
-                }
-            )
-
-    return registros
-
-
-def validar(registros: list[dict]) -> None:
-    if len(registros) != 27:
-        raise ValueError(
-            f"Esperávamos 27 registros, "
-            f"mas encontramos {len(registros)}."
-        )
-
-    codigos = {
-        registro["cd_mun"]
-        for registro in registros
-    }
-
-    faltantes = set(CODIGOS_RMS) - codigos
-
-    if faltantes:
-        raise ValueError(
-            f"Municípios faltantes: {sorted(faltantes)}"
-        )
-
-    if len(codigos) != 27:
-        raise ValueError(
-            "Existem municípios duplicados."
-        )
-
-    print(
-        "Validação concluída: "
-        "27 municípios da RMS."
-    )
-
-
-def carregar_banco(
-    registros: list[dict],
-    hash_dados: str,
-) -> None:
-
-    with engine.begin() as conexao:
-
-        id_fonte = obter_id_fonte(conexao)
-
-        if hash_ja_processado(
-            conexao,
-            id_fonte,
-            hash_dados,
-        ):
-            print(
-                "Essa resposta do SIDRA "
-                "já foi processada."
-            )
+    with carga(
+        FONTE,
+        periodo="|".join(indicador["periodos"]),
+        versao=f"SIDRA agregado {indicador['agregado']}",
+        arquivo=arquivo,
+        hash_arquivo=hash_json(dados),
+        forcar=forcar,
+    ) as ing:
+        if ing is None:
             return
 
-        # ----------------------------------------------------
-        # Remove somente esta consulta específica
-        # ----------------------------------------------------
+        df = transformar(dados, indicador)
+        validar_indicador(df, indicador)
+        df["id_ingestao"] = ing.id_ingestao
 
-        ids_existentes = conexao.execute(
-            text(
-                """
-                SELECT id_demografico
-                FROM ibge_demografico
-                WHERE cd_agregado = :agregado
-                  AND cd_variavel = :variavel
-                  AND co_periodo = :periodo
-                  AND cd_mun = ANY(:municipios)
-                """
-            ),
-            {
-                "agregado": AGREGADO,
-                "variavel": VARIAVEL,
-                "periodo": PERIODO,
-                "municipios": CODIGOS_RMS,
-            },
-        ).scalars().all()
-
-        if ids_existentes:
-            conexao.execute(
-                text(
-                    """
-                    DELETE FROM ibge_demo_classif
-                    WHERE id_demografico = ANY(:ids)
-                    """
-                ),
-                {
-                    "ids": ids_existentes
-                },
-            )
-
-            conexao.execute(
-                text(
-                    """
-                    DELETE FROM ibge_demografico
-                    WHERE id_demografico = ANY(:ids)
-                    """
-                ),
-                {
-                    "ids": ids_existentes
-                },
-            )
-
-        # ----------------------------------------------------
-        # Inserção
-        # ----------------------------------------------------
-
-        for registro in registros:
-            conexao.execute(
-                text(
-                    """
-                    INSERT INTO ibge_demografico (
-                        cd_mun,
-                        co_periodo,
-                        cd_agregado,
-                        cd_variavel,
-                        no_variavel,
-                        ds_unidade,
-                        vl_indicador
-                    )
-                    VALUES (
-                        :cd_mun,
-                        :co_periodo,
-                        :cd_agregado,
-                        :cd_variavel,
-                        :no_variavel,
-                        :ds_unidade,
-                        :vl_indicador
-                    )
-                    """
-                ),
-                registro,
-            )
-
-        # ----------------------------------------------------
-        # Controle de ingestão
-        # ----------------------------------------------------
-
-        conexao.execute(
-            text(
-                """
-                INSERT INTO controle_ingestao (
-                    id_fonte,
-                    co_periodo_referencia,
-                    ds_versao,
-                    no_arquivo_origem,
-                    dt_obtencao,
-                    dt_processamento,
-                    ds_hash_sha256,
-                    qt_registros_lidos,
-                    qt_registros_carregados,
-                    qt_registros_rejeitados,
-                    ds_status,
-                    ds_observacao
-                )
-                VALUES (
-                    :id_fonte,
-                    :periodo,
-                    :versao,
-                    :origem,
-                    CURRENT_DATE,
-                    :processamento,
-                    :hash,
-                    :lidos,
-                    :carregados,
-                    0,
-                    'CONCLUIDA',
-                    :observacao
-                )
-                """
-            ),
-            {
-                "id_fonte": id_fonte,
-                "periodo": PERIODO,
-                "versao": (
-                    f"SIDRA agregado {AGREGADO} "
-                    f"variável {VARIAVEL}"
-                ),
-                "origem": (
-                    f"API_SIDRA_{AGREGADO}_"
-                    f"{VARIAVEL}_{PERIODO}.json"
-                ),
-                "processamento": datetime.now(),
-                "hash": hash_dados,
-                "lidos": len(registros),
-                "carregados": len(registros),
-                "observacao": (
-                    "Consulta automática via API SIDRA "
-                    "para os 27 municípios da RMS."
-                ),
-            },
+        carregados = upsert(
+            ing.conexao,
+            "ibge_demografico",
+            para_registros(df),
+            chave=[
+                "cd_mun", "co_periodo", "cd_agregado",
+                "cd_variavel", "ds_chave_classificacao",
+            ],
+            expressoes={"js_classificacoes": "CAST(:js_classificacoes AS JSONB)"},
         )
 
-    print(
-        "IBGE_DEMOGRAFICO atualizado com sucesso."
-    )
+        simbolos = int(df["ds_valor_original"].notna().sum())
+        ing.registrar_contagens(
+            lidos=len(df),
+            carregados=carregados,
+            observacao=(
+                f"{indicador['descricao']}. "
+                f"{simbolos} valores com símbolo especial do IBGE."
+            ),
+        )
 
 
-def executar_pipeline() -> None:
-    print("")
-    print("========================================")
-    print("VELTIS - SIDRA / IBGE")
-    print("========================================")
-    print("")
+def executar_pipeline(forcar: bool = False) -> None:
+    print("\n=== IBGE - SIDRA ===")
 
-    dados = consultar_sidra()
-
-    hash_dados = calcular_hash(dados)
-
-    print(f"SHA-256: {hash_dados}")
-
-    registros = transformar(dados)
-
-    validar(registros)
-
-    carregar_banco(
-        registros,
-        hash_dados,
-    )
-
-    print("")
-    print("========================================")
-    print("PIPELINE SIDRA CONCLUÍDA")
-    print("========================================")
-    print("")
+    for indicador in INDICADORES_SIDRA:
+        carregar_indicador(indicador, forcar=forcar)
 
 
 if __name__ == "__main__":
-    executar_pipeline()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--forcar", action="store_true")
+    executar_pipeline(forcar=parser.parse_args().forcar)
