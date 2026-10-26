@@ -1,4 +1,4 @@
-# Versões testadas em 19/10/2026 (Python 3.11 ou mais novo).
+# Versões testadas em 26/10/2026 (Python 3.11 ou mais novo).
 pandas==3.0.5
 geopandas==1.2.0
 shapely==2.2.0
@@ -12,5 +12,10 @@ certifi==2026.7.22
 beautifulsoup4==4.15.0
 openpyxl==3.1.5
 
+# API
+fastapi==0.160.0
+uvicorn[standard]==0.53.0
+
 # Testes
 pytest==9.1.1
+httpx2==2.13.0
