@@ -1,9 +1,9 @@
 # Casos de uso — Veltis
 
 - **Projeto:** Veltis 
-- **Versão:** 1.0
+- **Versão:** 1.1 (revisão de 2026-11-03: ator Administrador, UC-12 e requisitos alinhados à especificação 0.3)
 - **Plataforma:** Aplicação web
-- **Ator principal:** Usuário
+- **Atores:** Usuário (qualquer pessoa que acessa o portal) e Administrador (integrante da equipe que mantém a base de dados)
 
 ## 1. Diagrama de casos de uso geral
 
@@ -25,7 +25,11 @@ flowchart LR
         UC09(["Consultar cursos superiores"])
         UC10(["Aplicar filtros"])
         UC11(["Ativar ou desativar camadas"])
+        UC12(["Atualizar dados oficiais"])
     end
+
+    Admin["Administrador"]
+    Admin --> UC12
 
     Usuario --> UC01
     Usuario --> UC02
@@ -40,7 +44,7 @@ flowchart LR
     Usuario --> UC11
 ```
 
-**Fonte:** Autor.
+**Fonte:** Elaborado pelos autores.
 
 ## 2. Descrição sucinta das funcionalidades
 
@@ -55,6 +59,7 @@ flowchart LR
 - **Consultar cursos superiores:** apresenta os cursos superiores relacionados à instituição ou ao local de oferta consultado.
 - **Aplicar filtros:** permite restringir os resultados por município e pelos filtros disponíveis na interface, como tipo de ensino e rede.
 - **Ativar ou desativar camadas:** permite controlar a exibição das camadas disponíveis no mapa.
+- **Atualizar dados oficiais:** o administrador executa os pipelines que baixam, validam e carregam os dados do IBGE, do INEP e da SEDUC-SP.
 
 
 ---
@@ -66,9 +71,9 @@ flowchart LR
 
 - **Objetivo:** permitir que o usuário visualize a malha geográfica da Região Metropolitana de Sorocaba.
 - **Ator(es):** Usuário.
-- **Requisito(s) relacionado(s):** RF-02.
+- **Requisito(s) relacionado(s):** RF-02, RF-13.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — documentação inicial.
+- **Versão e situação:** 1.1 — API implementada; interface em desenvolvimento.
 
 ### Condições
 - **Gatilho:** o usuário acessa a aplicação.
@@ -97,7 +102,7 @@ flowchart LR
 - **Ator(es):** Usuário.
 - **Requisito(s) relacionado(s):** RF-01, RF-03.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — documentação inicial.
+- **Versão e situação:** 1.1 — API implementada; interface em desenvolvimento.
 
 ### Condições
 - **Gatilho:** o usuário deseja consultar informações de um município.
@@ -127,7 +132,7 @@ flowchart LR
 - **Ator(es):** Usuário.
 - **Requisito(s) relacionado(s):** RF-10.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — a confirmar conforme a versão entregue.
+- **Versão e situação:** 1.1 — API implementada; interface a validar.
 
 ### Condições
 - **Gatilho:** o usuário solicita a consulta de indicadores.
@@ -155,9 +160,9 @@ flowchart LR
 
 - **Objetivo:** permitir que o usuário visualize as escolas relacionadas ao município selecionado.
 - **Ator(es):** Usuário.
-- **Requisito(s) relacionado(s):** RF-03, RF-04, RF-05, RF-07.
+- **Requisito(s) relacionado(s):** RF-03, RF-04, RF-05, RF-07, RF-12.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — documentação inicial.
+- **Versão e situação:** 1.1 — API implementada; interface em desenvolvimento.
 
 ### Condições
 - **Gatilho:** o usuário seleciona a consulta de escolas ou seleciona um município.
@@ -173,11 +178,11 @@ flowchart LR
 | 3 | — | — | O sistema apresenta os resultados disponíveis e os pontos que possuem coordenadas válidas. |
 
 ### Fluxos alternativos e exceções
-- **A partir do passo 3:** quando uma escola não possuir coordenadas disponíveis, ela poderá constar nos resultados da consulta, mas não será exibida como ponto no mapa. A forma de apresentação na interface está a definir.
+- **A partir do passo 3:** quando uma escola não possuir coordenada (nem oficial nem calculada pelo endereço), ela não aparece como ponto e é apresentada na lista "Escolas sem localização" (RF-12, RN-04).
 
 ### Regras, dados e variações de plataforma
-- **Regras relacionadas:** RN-01, RN-02, RN-03 e RN-04.
-- **Dados relevantes:** código da entidade, nome da escola, município, dependência administrativa e dados de localização disponíveis.
+- **Regras relacionadas:** RN-01, RN-02, RN-03, RN-04, RN-07 e RN-10.
+- **Dados relevantes:** código da entidade, nome da escola, município, dependência administrativa, coordenada e precisão da localização (`oficial`, `numero`, `numero_aproximado` ou `logradouro`).
 - **Variações web/mobile:** aplicação web.
 - **Critério de aceite:** as escolas apresentadas devem corresponder ao município e aos filtros selecionados.
 
@@ -187,7 +192,7 @@ flowchart LR
 - **Ator(es):** Usuário.
 - **Requisito(s) relacionado(s):** RF-08.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — documentação inicial.
+- **Versão e situação:** 1.1 — API implementada; interface em desenvolvimento.
 
 ### Condições
 - **Gatilho:** o usuário seleciona uma escola nos resultados ou no mapa.
@@ -215,9 +220,9 @@ flowchart LR
 
 - **Objetivo:** permitir que o usuário consulte os cursos técnicos relacionados às escolas.
 - **Ator(es):** Usuário.
-- **Requisito(s) relacionado(s):** RF-09 (necessita ajuste de identificação conforme a lista definitiva de RF).
+- **Requisito(s) relacionado(s):** RF-09.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — a confirmar conforme a versão entregue.
+- **Versão e situação:** 1.1 — API implementada; interface a validar.
 
 ### Condições
 - **Gatilho:** o usuário solicita a consulta dos cursos técnicos de uma escola.
@@ -237,7 +242,7 @@ flowchart LR
 
 ### Regras, dados e variações de plataforma
 - **Regras relacionadas:** não identificadas até o momento.
-- **Dados relevantes:** identificador da escola, código e nome do curso, modalidade e situação, conforme os campos disponíveis.
+- **Dados relevantes:** identificador da escola, código e nome do curso, área profissional e número de matrículas.
 - **Variações web/mobile:** aplicação web.
 - **Critério de aceite:** os cursos apresentados devem estar relacionados à escola selecionada.
 
@@ -247,7 +252,7 @@ flowchart LR
 - **Ator(es):** Usuário.
 - **Requisito(s) relacionado(s):** RF-03, RF-04, RF-05, RF-07.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — documentação inicial.
+- **Versão e situação:** 1.1 — API implementada; interface em desenvolvimento.
 
 ### Condições
 - **Gatilho:** o usuário seleciona a visualização de instituições de ensino superior.
@@ -266,8 +271,8 @@ flowchart LR
 - **A partir do passo 3:** instituições sem coordenadas disponíveis não podem ser posicionadas no mapa. A apresentação desses registros fora do mapa deve seguir o comportamento definido na interface.
 
 ### Regras, dados e variações de plataforma
-- **Regras relacionadas:** RN-01, RN-02, RN-03 e RN-04.
-- **Dados relevantes:** código da IES, nome, município da sede, tipo, categoria administrativa, organização acadêmica e situação, conforme os dados disponíveis.
+- **Regras relacionadas:** RN-01, RN-02, RN-03, RN-04 e RN-09.
+- **Dados relevantes:** código da IES, nome, sigla, rede, organização acadêmica, município do campus (local de oferta), endereço do campus, coordenada e precisão da localização.
 - **Variações web/mobile:** aplicação web.
 - **Critério de aceite:** os resultados devem corresponder aos filtros selecionados; os pontos devem representar apenas registros com coordenadas válidas.
 
@@ -277,7 +282,7 @@ flowchart LR
 - **Ator(es):** Usuário.
 - **Requisito(s) relacionado(s):** RF-08.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — documentação inicial.
+- **Versão e situação:** 1.1 — API implementada; interface em desenvolvimento.
 
 ### Condições
 - **Gatilho:** o usuário seleciona uma instituição nos resultados ou no mapa.
@@ -307,7 +312,7 @@ flowchart LR
 - **Ator(es):** Usuário.
 - **Requisito(s) relacionado(s):** RF-09.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — a confirmar conforme a versão entregue.
+- **Versão e situação:** 1.1 — API implementada; interface a validar.
 
 ### Condições
 - **Gatilho:** o usuário solicita a consulta dos cursos superiores de uma instituição.
@@ -323,11 +328,11 @@ flowchart LR
 | 3 | — | — | O sistema apresenta os cursos retornados pela consulta. |
 
 ### Fluxos alternativos e exceções
-- **A partir do passo 2:** cursos sem município de oferta informado, como pode ocorrer em registros EAD, devem permanecer sem localização municipal, sem inferência de município.
+- **A partir do passo 2:** cursos EAD aparecem em cada município onde há alunos matriculados. Para mostrar só o que funciona na cidade, a consulta usa a modalidade presencial (RN-09). Cursos EAD sem município (alcance nacional) não fazem parte da base.
 
 ### Regras, dados e variações de plataforma
-- **Regras relacionadas:** não identificadas até o momento.
-- **Dados relevantes:** código do curso, código da IES, nome, grau acadêmico, modalidade, turno, situação e município/local de oferta quando disponível.
+- **Regras relacionadas:** RN-09.
+- **Dados relevantes:** código do curso, código da IES, nome, área (CINE), grau acadêmico, modalidade, gratuidade, vagas (presencial), matrículas e município de oferta. O Censo da Educação Superior não informa o turno.
 - **Variações web/mobile:** aplicação web.
 - **Critério de aceite:** os cursos apresentados devem corresponder à instituição ou ao local de oferta consultado, conforme os dados disponíveis.
 
@@ -337,7 +342,7 @@ flowchart LR
 - **Ator(es):** Usuário.
 - **Requisito(s) relacionado(s):** RF-03, RF-04, RF-05, RF-06.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — documentação inicial.
+- **Versão e situação:** 1.1 — API implementada; interface em desenvolvimento.
 
 ### Condições
 - **Gatilho:** o usuário deseja restringir os resultados apresentados.
@@ -365,9 +370,9 @@ flowchart LR
 
 - **Objetivo:** permitir que o usuário controle a exibição das camadas disponíveis no mapa.
 - **Ator(es):** Usuário.
-- **Requisito(s) relacionado(s):** funcionalidade prevista no diagrama conceitual; requisito formal correspondente a confirmar.
+- **Requisito(s) relacionado(s):** RF-11.
 - **Interface/plataforma:** Aplicação web.
-- **Versão e situação:** 1.0 — a confirmar conforme a versão entregue.
+- **Versão e situação:** 1.1 — API implementada; interface a validar.
 
 ### Condições
 - **Gatilho:** o usuário deseja alterar as informações exibidas no mapa.
@@ -389,4 +394,36 @@ flowchart LR
 - **Dados relevantes:** identificação e estado de exibição das camadas disponíveis.
 - **Variações web/mobile:** aplicação web.
 - **Critério de aceite:** a camada selecionada deve ser exibida ou ocultada no mapa conforme a ação do usuário.
+
+## UC-12 — Atualizar dados oficiais
+
+- **Objetivo:** manter a base do Veltis igual às fontes oficiais mais recentes.
+- **Ator(es):** Administrador.
+- **Requisito(s) relacionado(s):** RF-14, RNF-08, RNF-09.
+- **Interface/plataforma:** linha de comando no computador da equipe (`backend/`).
+- **Versão e situação:** 1.1 — implementado.
+
+### Condições
+- **Gatilho:** sai uma nova edição de uma fonte (Censo Escolar, Censo Superior, malha do IBGE, SIDRA) ou o administrador corrige um arquivo de referência.
+- **Pré-condições:** acesso ao banco configurado no arquivo `.env`; arquivos manuais (Catálogo INEP, SEDUC-SP) colocados em `backend/data/raw` quando forem atualizados.
+- **Pós-condições:** dados carregados, carga registrada em `CONTROLE_INGESTAO` e relatório de verificação sem erros.
+
+### Fluxo principal
+
+| Passo | Ator | Ação do ator | Resposta do sistema |
+|---|---|---|---|
+| 1 | Administrador | Ajusta o ano da edição em `src/config/edicoes.py`, se for o caso. | — |
+| 2 | Administrador | Executa `python -m src.pipeline`. | O sistema baixa as fontes, valida e carrega cada etapa na ordem. |
+| 3 | — | — | O sistema registra cada carga (arquivo, hash, contagens, status). |
+| 4 | — | — | O sistema executa a verificação do banco e mostra o resultado. |
+
+### Fluxos alternativos e exceções
+- **Passo 2 — arquivo sem mudança:** a etapa é pulada (o hash já foi carregado).
+- **Passo 2 — falha de validação ou de download:** a etapa para sem gravar nada, a carga fica com status `FALHA` e as etapas seguintes não rodam.
+
+### Regras, dados e variações de plataforma
+- **Regras relacionadas:** RN-06 a RN-10.
+- **Dados relevantes:** arquivos oficiais, hash SHA-256, contagens lidas/carregadas/rejeitadas.
+- **Variações web/mobile:** não se aplica.
+- **Critério de aceite:** rodar duas vezes não duplica dados e a verificação termina "sem erros".
 

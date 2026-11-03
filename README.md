@@ -1,183 +1,113 @@
 # Veltis
 
-O **Veltis** é um Projeto Integrador acadêmico (ADS, Fatec Sorocaba) que integra dados públicos oficiais da Região Metropolitana de Sorocaba (RMS), composta por 27 municípios, para um portal web com mapa, filtros e indicadores.
-
-- **Equipe:** Julia Ribeiro Martins (backend) e Daniel Lansana de Almeida (frontend)
-- **Orientador:** prof. Munari
+Portal web com mapa das escolas, faculdades, cursos e indicadores demográficos dos 27 municípios da Região Metropolitana de Sorocaba (RMS), a partir de dados públicos oficiais.
 
 > O histórico de evolução do projeto está na seção [Atualizações](#atualizações).
 
-## Estado atual
+## Identificação
 
-| Parte | Situação |
+- **Projeto:** Veltis
+- **Equipe:** Julia Ribeiro Martins (backend e dados) e Daniel Lansana de Almeida (frontend)
+- **Orientação:** prof. Munari
+- **Cliente ou parceiro:** não há cliente externo; público-alvo: estudantes e pesquisadores, órgãos públicos, instituições de ensino e cidadãos interessados em dados da RMS
+- **Disciplina/etapa:** Projeto Integrador — ADS, Fatec Sorocaba, 2º semestre de 2026 (continuação do 1º semestre de 2026)
+- **Versão analisada:** branch `main`
+- **Atualizado em:** 2026-11-03
+
+## Resumo do projeto
+
+Quem quer saber quais escolas e faculdades existem na sua cidade, que cursos elas oferecem e como o município se compara aos vizinhos precisa consultar vários sites do IBGE, do INEP e da Secretaria da Educação, com formatos e códigos diferentes. O Veltis reúne esses dados num só lugar e mostra tudo num mapa.
+
+**Produzido até agora:** banco PostgreSQL/PostGIS com os dados oficiais dos 27 municípios (malha do IBGE, indicadores do Censo 2022, 1.806 escolas do Censo Escolar 2025, 435 cursos técnicos, 115 instituições de ensino superior e 10.381 ofertas de cursos do Censo Superior 2024); sete pipelines que baixam, validam e carregam esses dados; e uma API de leitura com 13 endereços, que entrega escolas e faculdades com latitude e longitude. A primeira versão do portal (React + MapTiler) está em desenvolvimento.
+
+**Ainda não validado:** o portal ligado à API real e a avaliação com usuários.
+
+## Problema, objetivos e avaliação
+
+- **Problema:** os dados educacionais e demográficos da RMS são públicos, mas estão espalhados em várias fontes, em arquivos grandes e com códigos, e as instituições de ensino superior não têm coordenadas publicadas.
+- **Objetivo:** construir um portal web gratuito que mostre no mapa as escolas e faculdades da RMS, seus cursos e os indicadores de cada município, com dados oficiais e rastreáveis.
+- **Como será avaliado:** testes automáticos do backend; verificação de qualidade do banco após cada carga; comparação dos dados exibidos com as fontes oficiais; demonstração do portal e avaliação com usuários (ver [`docs/testes/`](docs/testes/plano-e-evidencias-de-testes.md)).
+
+## Escopo e situação desta versão
+
+### Incluído ou produzido
+
+| Item | Estado |
 | --- | --- |
-| Banco PostgreSQL/PostGIS (Supabase) | Schema versionado em migrations (001 a 003) |
-| Pipelines de dados | 5 coletores, que alimentam as 9 tabelas de dados e rodam na ordem certa com um comando |
-| Views de leitura para a API | Prontas (geometrias em EPSG:4326, códigos traduzidos) |
-| Testes | 41 testes unitários + 6 de integração com o banco |
-| API (FastAPI) | De leitura, com 12 endereços, e guia da API para o frontend |
-| Frontend (React + Leaflet) | Estrutura base criada; desenvolvimento é a próxima fase |
+| Banco PostgreSQL/PostGIS com migrations versionadas (001 a 005) | Concluído |
+| Pipelines: malha IBGE, SIDRA, Censo Escolar, localização das escolas, geocodificação, Censo Superior, locais das faculdades | Concluído (geocodificação e locais das faculdades: carga no Supabase pendente) |
+| API de leitura (FastAPI) com GeoJSON, filtros, busca e paginação | Concluído |
+| Coordenadas das 33 faculdades com curso presencial (39 campi) | Concluído |
+| Portal web: mapa, filtros, painel da instituição | Em andamento (branch `front-end`) |
+| Documentação no modelo do professor | Concluído (2026-11-03) |
 
-## Fontes e tabelas
+### Fora do escopo ou ainda não iniciado
 
-| # | Pipeline | Fonte oficial | Edição | Tabelas |
-| --- | --- | --- | --- | --- |
-| 1 | `ibge_malha` | IBGE, Malha Municipal | 2025 | `ibge_municipios` |
-| 2 | `sidra` | IBGE, SIDRA (API v3) | Censo 2022 + estimativas 2024–2026 | `ibge_demografico` |
-| 3 | `censo_escolar` | INEP, Censo Escolar | 2025 V2 | `inep_escola`, `inep_curso_tecnico` |
-| 4 | `localizacao_escolas` | INEP Catálogo de Escolas + SEDUC-SP | exportação manual | `escola_localizacao` |
-| 5 | `censo_superior` | INEP, Censo da Educação Superior | 2024 | `mec_ies`, `mec_cursos` |
+- Dashboards no Power BI e Data Warehouse em esquema estrela: trabalho futuro ([DEC-007](docs/decisoes/DEC-007-power-bi-e-data-warehouse.md)).
+- IDH: não está disponível nas fontes usadas (o Censo 2022 não publica IDH).
+- Aplicativo móvel.
 
-Toda carga fica registrada em `fonte_dados` e `controle_ingestao`: arquivo, hash SHA-256, contagens e status (`INICIADA`, `CONCLUIDA` ou `FALHA`). Cada linha de dados guarda o `id_ingestao` da carga que a gerou.
+### Limitações, premissas e riscos
 
-As edições ficam fixas em `backend/src/config/edicoes.py`. Rodar de novo produz o mesmo banco; para atualizar uma fonte, mude o ano ali.
+- **Escolas sem coordenada:** 227 das 1.806 escolas não têm coordenada oficial. A etapa de geocodificação calcula o ponto pelo endereço quando possível ([DEC-002](docs/decisoes/DEC-002-geocodificacao-das-escolas.md)); as demais aparecem numa lista à parte.
+- **Faculdades:** o INEP não publica coordenadas; os pontos dos campi foram levantados pela equipe e 3 deles estão só na rua certa ([DEC-001](docs/decisoes/DEC-001-coordenadas-das-faculdades.md)).
+- **Arquivos manuais:** Catálogo de Escolas do INEP e SEDUC-SP não têm download automático.
+- **Edições:** Censo Escolar 2025 e Censo Superior 2024; o Censo Superior 2025 sai depois do fim do semestre.
 
-## Estrutura
+## Organização do código
 
-```text
-backend/
-├── database/migrations/   001 schema inicial · 002 integridade + demografia única · 003 views
-├── certs/                 certificado intermediário do INEP (ver "Download do INEP")
-├── data/
-│   ├── raw/               arquivos oficiais (não versionados)
-│   │   ├── ibge/  inep/censo_escolar/  inep/censo_superior/   ← baixados automaticamente
-│   │   └── inep/catalogo_escolas/  seduc_sp/                  ← colocados à mão
-│   └── processed/
-├── src/
-│   ├── config/            27 códigos da RMS, edições, indicadores SIDRA, colunas de localização
-│   ├── collectors/        um coletor por fonte + download.py
-│   ├── transforms/        conversões (códigos, 0/1 → booleano, valores do SIDRA)
-│   ├── validators/        validações (recorte RMS, colunas, duplicidade, domínios)
-│   ├── loaders/           ingestao.py (controle de cargas) e carga.py (upsert em lote)
-│   ├── database.py        conexão (criada sob demanda)
-│   ├── migrar.py          aplica as migrations
-│   ├── pipeline.py        roda todos os coletores na ordem
-│   └── verificar.py       relatório de qualidade do banco
-├── tests/
-└── requirements.txt
-docs/                      dicionário de dados, metadados e fontes
-frontend/                  aplicação React (estrutura base; desenvolvimento na próxima fase)
-```
+O projeto usa **componentes separados**:
 
-## Configuração local
-
-Requer Python 3.11 ou mais novo.
-
-```bash
-cd backend
-python -m venv .venv
-# Windows: .venv\Scripts\activate    |    Linux/Mac: source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-Copie `.env.example` para `.env` e informe a `DATABASE_URL`. Depois teste a conexão:
-
-```bash
-python teste_conexao.py
-```
-
-> Credenciais e arquivos `.env` nunca devem ser enviados ao GitHub.
-
-## Banco de dados: migrations
-
-```bash
-python -m src.migrar --status     # o que já foi aplicado
-python -m src.migrar              # aplica as pendentes, uma transação por arquivo
-```
-
-**No Supabase atual, que foi criado à mão com o script da migration 001:**
-
-1. Faça um backup (Supabase → Database → Backups, ou `pg_dump`).
-2. Registre a 001 como já aplicada, sem executá-la:
-   `python -m src.migrar --marcar-aplicada 001_schema_inicial.sql`
-3. Aplique as demais: `python -m src.migrar`
-
-A migration 002 preserva os dados já carregados. Antes de alterar qualquer coisa, ela confere três pontos e para sem mudar nada se algum falhar:
-
-- `ibge_demo_classif` está vazia;
-- não há fontes duplicadas;
-- não há valores do SIDRA duplicados.
-
-### O que a migration 002 muda
-
-- `ibge_demografico` passa a ser a **tabela demográfica única**. As classificações (sexo, idade e outras) ficam na própria linha, nas colunas `ds_chave_classificacao` e `js_classificacoes`. A tabela `ibge_demo_classif` é removida.
-- **Chaves únicas** impedem duplicidade em `fonte_dados`, `ibge_demografico` e `mec_cursos`.
-- A coluna `id_ingestao` entra em todas as tabelas de dados.
-- **RLS ligado** em todas as tabelas. A API automática do Supabase (chave anon) não lê nem altera nada; o backend usa a conexão direta.
-
-## Rodando os pipelines
-
-```bash
-python -m src.pipeline                        # tudo, na ordem certa, e no fim a verificação
-python -m src.pipeline --apenas sidra         # uma etapa
-python -m src.pipeline --forcar               # recarrega mesmo que a fonte não tenha mudado
-python -m src.pipeline --verificar            # só o relatório de qualidade
-```
-
-Rodar duas vezes não duplica nada: o hash do arquivo decide se é preciso recarregar, e a gravação é por upsert. Se uma etapa falhar, as seguintes não rodam, e o erro fica gravado em `controle_ingestao` com status `FALHA`.
-
-Os pacotes do INEP são grandes (Censo Escolar ≈ 537 MB, Censo Superior ≈ 457 MB). Eles são baixados uma vez para `data/raw` e reaproveitados depois.
-
-### Localização das escolas (arquivos manuais)
-
-O Catálogo de Escolas do INEP e a base da SEDUC-SP não têm download automático:
-
-1. Exporte o Catálogo de Escolas (filtro SP) e salve o CSV ou XLSX em `backend/data/raw/inep/catalogo_escolas/`.
-2. Baixe o arquivo de endereços de [Escolas Ativas da SEDUC-SP](https://dados.educacao.sp.gov.br/dataset/escolas-ativas) e salve em `backend/data/raw/seduc_sp/`.
-3. Rode `python -m src.pipeline --apenas localizacao`.
-
-O coletor reconhece as colunas pelo nome, ignorando acentos e maiúsculas. Se ele não achar uma coluna, a mensagem mostra o cabeçalho do arquivo; acrescente o nome em `src/config/fontes_localizacao.py`. Sem esses arquivos, a etapa é pulada com um aviso.
-
-### Download do INEP
-
-O servidor `download.inep.gov.br` não envia o certificado intermediário da sua cadeia TLS, então downloads comuns falham com `unable to get local issuer certificate`. O projeto inclui esse intermediário em `backend/certs/` e o soma às autoridades padrão (certifi) só para o INEP. A verificação de segurança **nunca** é desligada.
-
-- Certificado: RNP ICPEdu GR46 OV TLS CA 2025, emitido por GlobalSign Root R46.
-- Validade: até 19/11/2030.
-- SHA-256: `E1:07:47:D4:DA:7B:AB:09:CB:A9:95:2F:01:9D:35:34:CB:9F:BA:07:0B:F1:3D:87:91:B1:69:9C:D2:FF:59:DD`
-
-## Views para a API
-
-| View | Conteúdo |
+| Pasta/arquivo | Propósito |
 | --- | --- |
-| `vw_municipios_mapa` | Contorno dos 27 municípios (EPSG:4326) + população 2022 |
-| `vw_indicadores_municipio` | Uma linha por município: população, sexo, faixas de idade, alfabetização, frequência escolar, instrução |
-| `vw_escolas_mapa` | Uma linha por escola, com a melhor localização disponível, rótulos em texto e coordenadas em EPSG:4326 |
-| `vw_cursos_tecnicos` | Cursos de educação profissional por escola |
-| `vw_cursos_superiores` | Ofertas de graduação por município de oferta, com a IES |
-| `vw_ultimas_cargas` | Auditoria: última carga de cada arquivo |
+| [`backend/`](backend/README.md) | Banco (migrations), pipelines de dados (`src/`) e API (`api/`). Guia técnico completo no README da pasta. |
+| [`frontend/`](frontend/README.md) | Portal web em React + Vite + MapTiler. O código atual está na branch `front-end`. |
+| [`docs/`](docs/README.md) | Documentação: requisitos, casos de uso, dados (DER e dicionário), arquitetura, testes, decisões e continuidade. |
+| [`PRODUCT-BACKLOG.md`](PRODUCT-BACKLOG.md) | Itens de trabalho priorizados e pendências. |
 
-## API (FastAPI)
+Os pipelines de dados ficam dentro de `backend/src/`, e não numa pasta `data/` separada, porque usam a mesma conexão e as mesmas validações do backend. As fontes e a proveniência estão em [`docs/dados/README.md`](docs/dados/README.md).
 
-A API é **somente de leitura** e expõe 12 endereços sobre as views acima. O guia de uso para o frontend acompanha o repositório (commit `f7c2656`).
+## Componentes e evidências
 
-<!-- TODO (Julia): acrescentar aqui o comando para subir a API e o caminho do guia/da documentação interativa. -->
+| Componente ou frente | Estado | Evidência e localização |
+| --- | --- | --- |
+| Banco de dados | concluído | `backend/database/migrations/`; verificação de 2026-10-19 sem erros |
+| Pipelines de dados | concluído | `backend/src/`; `docs/testes/` §4.2 |
+| API | concluído | `backend/api/`; 30 testes da API; teste manual em 2026-10-26 |
+| Portal web | em andamento | branch `front-end`; `frontend/README.md` |
+| Aplicativo móvel | N/A | — |
+| Requisitos, casos de uso e modelos | concluído (revisão 2026-11-03) | `docs/requisitos/`, `docs/caso_de_uso/`, `docs/dados/`, `docs/arquitetura/` |
+| Testes e validação | em andamento | `docs/testes/` |
+| Documento acadêmico | em andamento | mantido pela equipe fora do repositório |
 
-## Testes
+## Rastreabilidade do projeto
 
-```bash
-pytest                    # testes unitários (sem banco e sem internet)
-```
+| Necessidade/objetivo | Requisito | Caso de uso | Implementação | Validação | Estado |
+| --- | --- | --- | --- | --- | --- |
+| Ver as instituições no mapa | RF-02, RF-07 | UC-01, UC-04, UC-07 | `/municipios`, `/mapa/instituicoes`; views `vw_escolas_mapa`, `vw_faculdades_mapa` | CT-14 | API concluída; interface em andamento |
+| Encontrar uma instituição | RF-03 a RF-06 | UC-02, UC-10 | filtros `municipio`, `tipo`, `dependencia`, `rede`, `busca` | CT-11, CT-15 | API concluída |
+| Saber o que cada instituição oferece | RF-08, RF-09 | UC-05, UC-06, UC-08, UC-09 | `/escolas/{codigo}`, `/cursos-tecnicos`, `/cursos-superiores` | testes da API | API concluída; interface a validar |
+| Comparar municípios | RF-10 | UC-03 | `/municipios/{codigo}`, `vw_indicadores_municipio` | testes da API | API concluída; interface planejada |
+| Confiar nos dados | RF-13, RF-14, RNF-06, RNF-08 | UC-12 | pipelines, `controle_ingestao`, `/fontes` | verificação do banco | concluído |
 
-Os testes de integração precisam de um banco PostgreSQL + PostGIS **vazio e descartável** (nunca o Supabase):
+## Continuidade entre semestres
 
-```bash
-VELTIS_TESTE_DATABASE_URL=postgresql+psycopg://postgres:senha@localhost:5432/veltis_teste pytest
-```
+O projeto começou no 1º semestre de 2026 com a estrutura de pastas e o README de apresentação (arquivos de código vazios, commit `5aa840d`). Tudo o que funciona hoje foi feito no 2º semestre de 2026. Detalhes em [`docs/continuidade/`](docs/continuidade/README.md).
 
-## Regras de dados
+## Como começar
 
-- O Censo Escolar define o universo de escolas. Catálogo e SEDUC só enriquecem.
-- Coordenada ausente fica `NULL`. Nada é inventado, e coordenada oficial é diferente de geocodificada.
-- O município do curso superior é o **local de oferta**, não a sede da IES.
-- No SIDRA, as categorias são pedidas explicitamente: `[all]` mistura níveis e conta em dobro.
-- Taxas não se somam entre municípios.
+1. Leia [`docs/README.md`](docs/README.md) para encontrar cada documento.
+2. Backend: siga [`backend/README.md`](backend/README.md) (Python, `.env`, migrations, pipelines, API).
+3. Frontend: siga `frontend/README.md` (Node.js, `VITE_API_URL`, `VITE_MAPTILER_KEY`).
+4. Nunca versione senhas, tokens ou o arquivo `.env`.
 
 ## Atualizações
 
 
 ### 2026-11-03
 
+- **Coordenadas das faculdades e geocodificação das escolas** Julia: tabela `ies_local_oferta` com os 39 campi presenciais (endereço oficial + OpenStreetMap/CNEFE), pipeline `geocodificacao` (geocodebr/IBGE CNEFE) para as escolas sem coordenada oficial, migrations 004 e 005, endereço `/mapa/instituicoes` na API (escolas e faculdades com latitude e longitude) e registros DEC-001 e DEC-002 em `docs/decisoes/`. O código é enviado ao repositório depois de aplicada a migração no Supabase; nesta data subiu só a documentação.
+- **Documentação no padrão do repositório-modelo** Julia (revisando o material do Daniel): README no formato do template, guia técnico em `backend/README.md`, requisitos e casos de uso alinhados, arquitetura, testes, decisões DEC-003 a DEC-007, continuidade, backlog, dicionário de dados atualizado.
 - **Organização da documentação** Daniel: reorganização dos documentos do projeto na pasta `docs/`.
 - **Adicionando registro de atualizações** Daniel: antigos commits registrados na seção de atualizações.
 

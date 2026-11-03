@@ -1,6 +1,15 @@
-# Credenciais e ambiente
+# Credenciais e ambiente (nunca versionar)
 .env
 **/.env
+.env.*
+**/.env.*
+!.env.example
+!**/.env.example
+*.key
+secrets/
+# Chaves .pem são ignoradas, exceto o certificado público do INEP usado nos downloads
+*.pem
+!backend/certs/*.pem
 .venv/
 venv/
 
@@ -26,3 +35,14 @@ backend/data/processed/**
 # Logs / temporários
 *.log
 *.tmp
+
+# Arquivos temporários do Office
+~$*.docx
+~$*.xlsx
+~$*.pptx
+*.bak
+
+# Frontend
+node_modules/
+dist/
+.vite/

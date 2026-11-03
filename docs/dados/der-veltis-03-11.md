@@ -71,6 +71,26 @@ erDiagram
         bigint ID_FONTE FK
         varchar TP_METODO_LOCALIZACAO
         bigint ID_INGESTAO FK
+        varchar DS_PRECISAO
+        integer VL_DESVIO_METROS
+    }
+
+    IES_LOCAL_OFERTA {
+        bigint ID_LOCAL PK
+        integer CO_IES
+        char CD_MUN FK
+        varchar NO_LOCAL
+        varchar DS_ENDERECO
+        varchar NO_BAIRRO
+        char NU_CEP
+        numeric VL_LATITUDE
+        numeric VL_LONGITUDE
+        geometry GEOMETRY
+        varchar DS_PRECISAO
+        varchar DS_FONTE_ENDERECO
+        varchar DS_FONTE_COORDENADA
+        text DS_OBSERVACAO
+        bigint ID_INGESTAO FK
     }
 
     INEP_CURSO_TECNICO {
@@ -156,11 +176,13 @@ erDiagram
     IBGE_MUNICIPIOS ||--o{ INEP_ESCOLA : "localiza escolas"
     IBGE_MUNICIPIOS ||--o{ INEP_CURSO_TECNICO : "localiza ofertas tecnicas"
     IBGE_MUNICIPIOS ||--o{ MEC_CURSOS : "localiza ofertas superiores"
+    IBGE_MUNICIPIOS ||--o{ IES_LOCAL_OFERTA : "localiza campi"
 
     INEP_ESCOLA ||--o{ ESCOLA_LOCALIZACAO : "possui localizacoes"
     INEP_ESCOLA ||--o{ INEP_CURSO_TECNICO : "oferta cursos tecnicos"
 
     MEC_IES ||--o{ MEC_CURSOS : "oferta cursos superiores"
+    MEC_IES ||..o{ IES_LOCAL_OFERTA : "possui campi (CO_IES)"
 
     FONTE_DADOS ||--o{ CONTROLE_INGESTAO : "identifica a fonte"
     FONTE_DADOS ||--o{ ESCOLA_LOCALIZACAO : "origina localizacao"
@@ -172,6 +194,7 @@ erDiagram
     CONTROLE_INGESTAO o|--o{ INEP_CURSO_TECNICO : "origina carga"
     CONTROLE_INGESTAO o|--o{ MEC_IES : "origina carga"
     CONTROLE_INGESTAO o|--o{ MEC_CURSOS : "origina carga"
+    CONTROLE_INGESTAO o|--o{ IES_LOCAL_OFERTA : "origina carga"
 ```
 
 <div align="center">
@@ -187,6 +210,8 @@ erDiagram
 - **INEP_ESCOLA — ESCOLA_LOCALIZACAO (1:N):** uma escola pode possuir registros de localização provenientes de fontes diferentes. A ligação utiliza o ano do Censo e o código da entidade.
 - **INEP_ESCOLA — INEP_CURSO_TECNICO (1:N):** uma escola pode ofertar vários cursos técnicos. A relação utiliza o ano do Censo e o código da entidade.
 - **MEC_IES — MEC_CURSOS (1:N):** uma instituição de ensino superior pode ofertar vários cursos. A identificação da IES utiliza o ano do Censo e o código da IES.
+- **IBGE_MUNICIPIOS — IES_LOCAL_OFERTA (1:N):** um município pode ter vários campi de faculdades; cada campus pertence a um município da RMS (migration 004).
+- **MEC_IES — IES_LOCAL_OFERTA (1:N, relação lógica):** cada campus pertence a uma instituição, identificada por `CO_IES`. Não há chave estrangeira física porque a chave de `MEC_IES` inclui o ano do Censo; o pipeline `locais_ies` confere se o `CO_IES` existe.
 - **FONTE_DADOS — CONTROLE_INGESTAO (1:N):** uma fonte pode possuir várias execuções de carga registradas.
 - **FONTE_DADOS — ESCOLA_LOCALIZACAO (1:N):** cada registro de localização identifica a fonte de onde vieram o endereço e/ou as coordenadas.
 - **CONTROLE_INGESTAO — tabelas de dados (1:N):** uma execução de carga pode originar vários registros nas tabelas de dados. O vínculo é feito pelo campo `ID_INGESTAO`, que pode estar nulo conforme a definição da planilha.
@@ -196,5 +221,6 @@ erDiagram
 1. `IBGE_DEMO_CLASSIF` não aparece no diagrama porque foi removida na migration 002. As classificações e categorias do SIDRA são armazenadas em `IBGE_DEMOGRAFICO`, nos campos `DS_CHAVE_CLASSIFICACAO` e `JS_CLASSIFICACOES`.
 2. `MEC_IES` armazena a instituição e o município de sua sede. `MEC_CURSOS` armazena as ofertas e o município do local de oferta. Uma IES sediada fora da Região Metropolitana de Sorocaba pode ofertar cursos em municípios da região.
 3. `ESCOLA_LOCALIZACAO` separa os dados de endereço e coordenadas dos dados cadastrais da escola. Assim, uma escola pode continuar cadastrada mesmo quando não possui coordenadas.
-4. Os campos `ID_INGESTAO` permitem rastrear a carga de origem dos registros. A planilha informa que esses campos podem ser nulos.
-5. O diagrama representa as relações descritas no dicionário. Restrições identificadas na planilha como sugeridas ou lógicas devem ser confirmadas no DDL do PostgreSQL antes de serem tratadas como restrições físicas implementadas.
+4. `IES_LOCAL_OFERTA` (migration 004) guarda latitude e longitude de cada campus presencial, porque o Censo da Educação Superior não publica coordenadas (ver `docs/decisoes/DEC-001`). `ESCOLA_LOCALIZACAO` ganhou `DS_PRECISAO` e `VL_DESVIO_METROS` (migration 005) para os pontos geocodificados a partir do endereço (ver `docs/decisoes/DEC-002`).
+5. Os campos `ID_INGESTAO` permitem rastrear a carga de origem dos registros. A planilha informa que esses campos podem ser nulos.
+6. O diagrama representa as relações descritas no dicionário. Restrições identificadas na planilha como sugeridas ou lógicas devem ser confirmadas no DDL do PostgreSQL antes de serem tratadas como restrições físicas implementadas.
