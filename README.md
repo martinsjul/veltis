@@ -5,6 +5,8 @@ O **Veltis** é um Projeto Integrador acadêmico (ADS, Fatec Sorocaba) que integ
 - **Equipe:** Julia Ribeiro Martins (backend) e Daniel Lansana de Almeida (frontend)
 - **Orientador:** prof. Munari
 
+> O histórico de evolução do projeto está na seção [Atualizações](#atualizações).
+
 ## Estado atual
 
 | Parte | Situação |
@@ -13,8 +15,8 @@ O **Veltis** é um Projeto Integrador acadêmico (ADS, Fatec Sorocaba) que integ
 | Pipelines de dados | 5 coletores, que alimentam as 9 tabelas de dados e rodam na ordem certa com um comando |
 | Views de leitura para a API | Prontas (geometrias em EPSG:4326, códigos traduzidos) |
 | Testes | 41 testes unitários + 6 de integração com o banco |
-| API (FastAPI) | Próxima fase |
-| Frontend (React + Leaflet) | Próxima fase |
+| API (FastAPI) | De leitura, com 12 endereços, e guia da API para o frontend |
+| Frontend (React + Leaflet) | Estrutura base criada; desenvolvimento é a próxima fase |
 
 ## Fontes e tabelas
 
@@ -54,7 +56,7 @@ backend/
 ├── tests/
 └── requirements.txt
 docs/                      dicionário de dados, metadados e fontes
-frontend/                  aplicação React (próxima fase)
+frontend/                  aplicação React (estrutura base; desenvolvimento na próxima fase)
 ```
 
 ## Configuração local
@@ -145,6 +147,12 @@ O servidor `download.inep.gov.br` não envia o certificado intermediário da sua
 | `vw_cursos_superiores` | Ofertas de graduação por município de oferta, com a IES |
 | `vw_ultimas_cargas` | Auditoria: última carga de cada arquivo |
 
+## API (FastAPI)
+
+A API é **somente de leitura** e expõe 12 endereços sobre as views acima. O guia de uso para o frontend acompanha o repositório (commit `f7c2656`).
+
+<!-- TODO (Julia): acrescentar aqui o comando para subir a API e o caminho do guia/da documentação interativa. -->
+
 ## Testes
 
 ```bash
@@ -164,3 +172,49 @@ VELTIS_TESTE_DATABASE_URL=postgresql+psycopg://postgres:senha@localhost:5432/vel
 - O município do curso superior é o **local de oferta**, não a sede da IES.
 - No SIDRA, as categorias são pedidas explicitamente: `[all]` mistura níveis e conta em dobro.
 - Taxas não se somam entre municípios.
+
+## Atualizações
+
+
+### 2026-11-03
+
+- **Organização da documentação** Daniel: reorganização dos documentos do projeto na pasta `docs/`.
+- **Adicionando registro de atualizações** Daniel: antigos commits registrados na seção de atualizações.
+
+### 2026-10-26
+
+- **API de leitura + guia da API para o frontend** Julia: guia que explica ao frontend como consumir a API.
+- **API FastAPI de leitura, com 12 endereços** Julia: primeira versão da API sobre as views do banco.
+
+### 2026-10-19
+
+- **Backend completo: migrations, pipelines, views e localização das escolas** Julia: migrations 001 a 003, os 5 coletores, as views de leitura e o enriquecimento da localização das escolas (INEP + SEDUC-SP).
+
+### 2026-09-28
+
+- **Documentos antigos removidos** Julia: exclusão de `Veltis_Metadados.docx`, `Veltis_Dicionario_de_Dados.xlsx` e `Veltis_Bases_e_Fontes_de_Dados.docx` de `docs/`.
+- **Arquivos adicionados por upload** Daniel: novos arquivos de documentação enviados ao repositório.
+
+### 2026-09-27
+
+- **Organiza estrutura atual do Veltis e remove arquivos antigos** Julia: limpeza do repositório e ajuste da estrutura de pastas.
+- **Estrutura inicial e pipelines de dados do Veltis** Julia: primeira estrutura dos pipelines de coleta.
+
+### 2026-09-21
+
+- **Adicionando documentação dos dados** Daniel: dicionário de dados, metadados e fontes.
+
+### 2026-09-17
+
+- **Banco PostGIS e importação inicial dos dados IBGE** Julia: criação do banco PostgreSQL/PostGIS e primeira carga do IBGE.
+
+### 2026-08-03
+
+- **Scripts de importação de dados IBGE, INEP e MEC** Julia: primeiros scripts de importação das três fontes.
+
+### 2026-06-09
+
+- **Alterando README** Julia.
+- **Adicionando estrutura base do Frontend** Julia: criação da pasta `frontend/`.
+- **Estrutura inicial do projeto Veltis** Julia: organização inicial das pastas.
+- **Initial commit** Julia: criação do repositório.
