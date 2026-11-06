@@ -82,7 +82,23 @@ API executada num computador da Fatec, ligada ao Supabase pelo *Session pooler*.
 
 - 39 locais de faculdades carregados; todos dentro do polígono do município; 0 ofertas presenciais sem local.
 - Geocodificação: em 12 endereços de teste, 10 receberam ponto (7 no número exato, 2 em número vizinho, 1 na rua) e 2 foram recusados corretamente (um endereço inexistente e um sem CEP que só casou com o município).
-- **Pendente:** executar as etapas `geocodificacao` e `locais_ies` no Supabase e registrar aqui quantas das 227 escolas ganharam ponto.
+
+### 4.5 Carga no Supabase (2026-11-06)
+
+Executado no computador da equipe: `python -m src.migrar`, `--apenas locais_ies`, `--apenas geocodificacao` e `--verificar`. Antes, os testes automáticos rodaram de novo (80 passaram).
+
+| Verificação | Resultado |
+| --- | --- |
+| Migrations 004 e 005 | Aplicadas |
+| Locais das faculdades (campi) com coordenada | 39 (28 no prédio, 8 no número, 3 na rua); 0 ofertas presenciais sem local |
+| Escolas sem coordenada oficial e com endereço | 198 |
+| Escolas que ganharam ponto pela geocodificação | **43** (21 no número, 8 em número vizinho, 14 na rua) |
+| Escolas recusadas pela geocodificação | 155 (153 só acharam CEP, bairro ou município; 2 com margem de erro grande demais) |
+| Escolas com ponto no mapa | **1.622** (1.579 oficiais + 43 geocodificadas) |
+| Escolas em atividade ainda sem ponto | 154 (aparecem em `/escolas/sem-localizacao`) |
+| Pontos de escola fora do polígono do município | 5 (os mesmos de 19/10, sinalizados) |
+| Linhas sem rastreabilidade (`id_ingestao`) | 0 |
+| Resultado da verificação | **sem erros** |
 
 ## 5. Avaliação com usuários
 

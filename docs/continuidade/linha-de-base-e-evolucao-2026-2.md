@@ -29,7 +29,7 @@ No commit `5aa840d` o repositório tinha a **estrutura de pastas e o README de a
 | Views de leitura | novo | não existia → implementado | 8 views com códigos traduzidos e coordenadas em WGS 84 | migrations 003 a 005 | Testes da API |
 | API FastAPI | novo | não existia → implementado | 13 endereços de leitura, GeoJSON e lista para o mapa, paginação, filtros | `backend/api/`; commits `fa80c70`, `f7c2656` | Testes automáticos; teste manual em 2026-10-26 contra o Supabase |
 | Coordenadas das faculdades | novo | não existia → implementado | 39 campi presenciais com latitude/longitude | `backend/data/referencia/`; DEC-001 | Todos os pontos dentro do município correto |
-| Geocodificação das escolas sem ponto | novo | não existia → implementado | Etapa automática com geocodebr/IBGE CNEFE | DEC-002 | Teste local; execução no Supabase pendente |
+| Geocodificação das escolas sem ponto | novo | não existia → implementado | Etapa automática com geocodebr/IBGE CNEFE | DEC-002 | Executado no Supabase em 2026-11-06: 43 de 198 escolas ganharam ponto |
 | Frontend React | herdado e alterado | estrutura vazia → em desenvolvimento | Primeira versão com mapa (MapTiler), filtros e painel da instituição | branch `front-end`, commit `3b29fe5` | A validar com a API real |
 | Documentação no modelo do professor | herdado e alterado | arquivos vazios → em andamento | Requisitos, casos de uso, DER, dicionário de dados, decisões, testes, continuidade | `docs/`; commits `8b3a3a3`, `7985bbe`, `a801816` | Revisão da equipe |
 | Power BI e Data Warehouse | pendente | planejado → planejado | Nenhum (trabalho futuro) | DEC-007; `PRODUCT-BACKLOG.md` | — |
@@ -46,5 +46,5 @@ O detalhamento está em [`contribuicoes.csv`](contribuicoes.csv).
 ## Decisões e próximos passos
 
 - **Decisões do semestre:** DEC-001 a DEC-007 em `docs/decisoes/`.
-- **Pendências:** levar o frontend da branch `front-end` para a `main` e ligá-lo à API real; rodar a geocodificação no Supabase; validar o portal com usuários; protótipos de tela em `docs/prototipos/`; documento acadêmico.
+- **Pendências:** levar o frontend da branch `front-end` para a `main` e ligá-lo à API real; validar o portal com usuários; protótipos de tela em `docs/prototipos/`; documento acadêmico.
 - **Próximos passos:** ver [`PRODUCT-BACKLOG.md`](../../PRODUCT-BACKLOG.md).

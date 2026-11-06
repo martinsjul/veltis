@@ -46,6 +46,12 @@ VERIFICACOES = [
     ("Escolas com ponto no mapa",
      "SELECT COUNT(*) FROM vw_escolas_mapa WHERE tem_coordenada",
      lambda n: n > 0, "ATENÇÃO"),
+    ("Escolas com ponto geocodificado (IBGE CNEFE / geocodebr)",
+     "SELECT COUNT(*) FROM vw_escolas_mapa WHERE tp_metodo_localizacao = 'GEOCODIFICADO' "
+     "AND tem_coordenada", lambda n: n >= 0, "ATENÇÃO"),
+    ("Escolas em atividade ainda sem ponto no mapa",
+     "SELECT COUNT(*) FROM vw_escolas_mapa WHERE em_atividade AND NOT tem_coordenada",
+     lambda n: n >= 0, "ATENÇÃO"),
     ("Pontos de escola fora do polígono do município",
      "SELECT COUNT(*) FROM vw_escolas_mapa WHERE ponto_confere_municipio = FALSE",
      lambda n: n == 0, "ATENÇÃO"),
@@ -55,6 +61,13 @@ VERIFICACOES = [
      "SELECT COUNT(*) FROM mec_cursos", lambda n: n > 0, "ERRO"),
     ("Ofertas presenciais",
      "SELECT COUNT(*) FROM mec_cursos WHERE tp_dimensao = 1", lambda n: n > 0, "ERRO"),
+    ("Faculdades: locais (campi) com coordenada",
+     "SELECT COUNT(*) FROM ies_local_oferta", lambda n: n > 0, "ERRO"),
+    ("Faculdades: ofertas presenciais sem local com coordenada",
+     "SELECT COUNT(*) FROM vw_faculdades_sem_local", lambda n: n == 0, "ATENÇÃO"),
+    ("Faculdades: pontos fora do polígono do município",
+     "SELECT COUNT(*) FROM vw_faculdades_mapa WHERE NOT ponto_confere_municipio",
+     lambda n: n == 0, "ERRO"),
     ("Linhas de dados sem id_ingestao (sem rastreabilidade)",
      """
      SELECT (SELECT COUNT(*) FROM ibge_municipios WHERE id_ingestao IS NULL)
@@ -63,6 +76,7 @@ VERIFICACOES = [
           + (SELECT COUNT(*) FROM inep_curso_tecnico WHERE id_ingestao IS NULL)
           + (SELECT COUNT(*) FROM mec_ies WHERE id_ingestao IS NULL)
           + (SELECT COUNT(*) FROM mec_cursos WHERE id_ingestao IS NULL)
+          + (SELECT COUNT(*) FROM ies_local_oferta WHERE id_ingestao IS NULL)
      """, lambda n: n == 0, "ATENÇÃO"),
     ("Cargas que terminaram em FALHA (última de cada arquivo)",
      "SELECT COUNT(*) FROM vw_ultimas_cargas WHERE ds_status = 'FALHA'",

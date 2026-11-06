@@ -11,8 +11,8 @@ Prioridade: Alta / Média / Baixa. Estado: Pronto / Em andamento / A fazer / Fut
 | PB-01 | Banco PostGIS com migrations versionadas | RNF-08 | Alta | Julia | Pronto |
 | PB-02 | Pipelines das fontes oficiais com controle de cargas | RF-14 | Alta | Julia | Pronto |
 | PB-03 | API de leitura com GeoJSON, filtros e paginação | RF-01 a RF-13 | Alta | Julia | Pronto |
-| PB-04 | Coordenadas dos campi das faculdades | RF-07 | Alta | Julia | Pronto (carga no Supabase pendente) |
-| PB-05 | Geocodificação das escolas sem coordenada | RF-07 | Média | Julia | Pronto (execução no Supabase pendente) |
+| PB-04 | Coordenadas dos campi das faculdades | RF-07 | Alta | Julia | Concluído (Supabase, 2026-11-06) |
+| PB-05 | Geocodificação das escolas sem coordenada | RF-07 | Média | Julia | Concluído (Supabase, 2026-11-06: 43 escolas ganharam ponto) |
 | PB-06 | Levar o frontend da branch `front-end` para a `main` | RF-02, RF-07 | Alta | Daniel | A fazer |
 | PB-07 | Ligar o frontend à API real (`/mapa/instituicoes`) | RNF-04 | Alta | Daniel | Em andamento |
 | PB-08 | Painel de detalhes da escola e da faculdade, com cursos | RF-08, RF-09 | Alta | Daniel | Em andamento |

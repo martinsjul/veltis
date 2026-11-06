@@ -36,3 +36,4 @@ A coordenada oficial tem sempre prioridade na `vw_escolas_mapa`. O endereço e o
 - O pacote está em versão inicial (0.2.0, "alfa"); a versão fica fixada no `requirements.txt` e registrada em `controle_ingestao`.
 - O site deve citar "IBGE, CNEFE – Censo Demográfico 2022" e "geocodebr (Ipea)".
 - Revisar a cada nova edição do Censo Escolar: a etapa roda de novo e recalcula os pontos.
+- Resultado da primeira execução no Supabase (2026-11-06): 43 das 198 escolas com endereço ganharam ponto; 155 foram recusadas por precisão insuficiente (ver `docs/testes/`, §4.5).

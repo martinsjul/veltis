@@ -160,7 +160,8 @@ def instituicoes(
 ):
     """Uma linha por instituição em cada município, com a contagem de cursos.
 
-    Ordenada pelas que têm mais cursos presenciais.
+    Ordenada pelas que têm mais cursos presenciais. Em `locais` vêm os
+    campi com latitude e longitude (para o mapa, prefira /mapa/instituicoes).
     """
 
     c = condicoes_superior(con, ano, municipio, None, modalidade, rede)
@@ -174,8 +175,19 @@ def instituicoes(
                COUNT(*) FILTER (WHERE e_presencial) AS qt_cursos_presenciais,
                COUNT(*) FILTER (WHERE NOT e_presencial) AS qt_cursos_ead,
                COALESCE(SUM(qt_matriculas), 0) AS qt_matriculas,
+               COALESCE((
+                   SELECT json_agg(json_build_object(
+                              'no_local', f.no_local,
+                              'ds_endereco', f.ds_endereco,
+                              'latitude', ROUND(f.latitude::numeric, 6),
+                              'longitude', ROUND(f.longitude::numeric, 6),
+                              'ds_precisao_localizacao', f.ds_precisao_localizacao)
+                          ORDER BY f.no_local)
+                   FROM vw_faculdades_mapa f
+                   WHERE f.co_ies = v.co_ies AND f.cd_mun = v.co_municipio
+               ), '[]'::json) AS locais,
                COUNT(*) OVER () AS _total
-        FROM vw_cursos_superiores
+        FROM vw_cursos_superiores v
         {c.where}
         GROUP BY co_ies, no_ies, sg_ies, ds_rede, ds_organizacao_academica,
                  co_municipio, no_municipio, sede_no_municipio

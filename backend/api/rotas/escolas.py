@@ -105,6 +105,8 @@ def mapa_escolas(
                em_atividade, oferece_ensino_medio,
                {EDUCACAO_PROFISSIONAL} AS educacao_profissional,
                qt_cursos_tecnicos, ponto_confere_municipio,
+               ROUND(latitude::numeric, 6) AS latitude, ROUND(longitude::numeric, 6) AS longitude,
+               ds_precisao_localizacao,
                ST_AsGeoJSON(geometria, 6)::json AS geometria
         FROM vw_escolas_mapa
         {c.where} AND tem_coordenada
@@ -175,7 +177,8 @@ def ficha_escola(
                oferece_ensino_medio, oferece_medio_integrado, oferece_normal_magisterio,
                oferece_itinerario_tecnico, qt_cursos_tecnicos, qt_matriculas_educ_profissional,
                ds_endereco, nu_cep, nu_telefone, fonte_localizacao, tp_metodo_localizacao,
-               tem_coordenada, ponto_confere_municipio, latitude, longitude
+               tem_coordenada, ponto_confere_municipio, latitude, longitude,
+               ds_precisao_localizacao, vl_desvio_metros
         FROM vw_escolas_mapa
         WHERE co_entidade = :co AND nu_ano_censo = :ano
         """,

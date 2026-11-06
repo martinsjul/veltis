@@ -6,7 +6,7 @@ Guia técnico do backend do Veltis. A apresentação do projeto está no [README
 
 - **Responsabilidade:** coletar, validar e carregar os dados oficiais (IBGE, INEP, SEDUC-SP) num PostgreSQL/PostGIS e expô-los por uma API de leitura.
 - **Interfaces/consumidores:** portal web (`frontend/`). A API não grava dados; as cargas são feitas só pelos pipelines.
-- **Estado atual:** disponível. Banco carregado e verificado em 2026-10-19; API testada contra o Supabase em 2026-10-26; coordenadas das faculdades e geocodificação das escolas implementadas em 2026-11-03 (carga no Supabase pendente).
+- **Estado atual:** disponível. Banco carregado e verificado em 2026-10-19; API testada contra o Supabase em 2026-10-26; coordenadas das faculdades e geocodificação das escolas implementadas em 2026-11-03 e carregadas no Supabase em 2026-11-06.
 
 ## Pré-requisitos
 

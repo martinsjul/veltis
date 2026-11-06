@@ -35,7 +35,7 @@ Quem quer saber quais escolas e faculdades existem na sua cidade, que cursos ela
 | Item | Estado |
 | --- | --- |
 | Banco PostgreSQL/PostGIS com migrations versionadas (001 a 005) | Concluído |
-| Pipelines: malha IBGE, SIDRA, Censo Escolar, localização das escolas, geocodificação, Censo Superior, locais das faculdades | Concluído (geocodificação e locais das faculdades: carga no Supabase pendente) |
+| Pipelines: malha IBGE, SIDRA, Censo Escolar, localização das escolas, geocodificação, Censo Superior, locais das faculdades | Concluído (carga no Supabase em 2026-11-06) |
 | API de leitura (FastAPI) com GeoJSON, filtros, busca e paginação | Concluído |
 | Coordenadas das 33 faculdades com curso presencial (39 campi) | Concluído |
 | Portal web: mapa, filtros, painel da instituição | Em andamento (branch `front-end`) |
@@ -49,7 +49,7 @@ Quem quer saber quais escolas e faculdades existem na sua cidade, que cursos ela
 
 ### Limitações, premissas e riscos
 
-- **Escolas sem coordenada:** 227 das 1.806 escolas não têm coordenada oficial. A etapa de geocodificação calcula o ponto pelo endereço quando possível ([DEC-002](docs/decisoes/DEC-002-geocodificacao-das-escolas.md)); as demais aparecem numa lista à parte.
+- **Escolas sem coordenada:** 227 das 1.806 escolas não têm coordenada oficial. A geocodificação pelo endereço deu ponto a 43 delas em 2026-11-06 ([DEC-002](docs/decisoes/DEC-002-geocodificacao-das-escolas.md)); hoje 1.622 escolas aparecem no mapa e as 184 restantes (154 em atividade) aparecem numa lista à parte, porque o endereço delas só permitiu achar o CEP, o bairro ou o município.
 - **Faculdades:** o INEP não publica coordenadas; os pontos dos campi foram levantados pela equipe e 3 deles estão só na rua certa ([DEC-001](docs/decisoes/DEC-001-coordenadas-das-faculdades.md)).
 - **Arquivos manuais:** Catálogo de Escolas do INEP e SEDUC-SP não têm download automático.
 - **Edições:** Censo Escolar 2025 e Censo Superior 2024; o Censo Superior 2025 sai depois do fim do semestre.
@@ -104,9 +104,13 @@ O projeto começou no 1º semestre de 2026 com a estrutura de pastas e o README 
 ## Atualizações
 
 
+### 2026-11-06
+
+- **Latitude e longitude no Supabase** Julia: migrations 004 e 005 aplicadas; 39 campi das faculdades carregados; geocodificação deu ponto a 43 das 198 escolas sem coordenada oficial que tinham endereço (21 no número, 8 em número vizinho, 14 na rua). `/mapa/instituicoes` passa a entregar 1.622 escolas e 39 campi com latitude e longitude. Código da API e dos pipelines enviado ao repositório.
+
 ### 2026-11-03
 
-- **Coordenadas das faculdades e geocodificação das escolas** Julia: tabela `ies_local_oferta` com os 39 campi presenciais (endereço oficial + OpenStreetMap/CNEFE), pipeline `geocodificacao` (geocodebr/IBGE CNEFE) para as escolas sem coordenada oficial, migrations 004 e 005, endereço `/mapa/instituicoes` na API (escolas e faculdades com latitude e longitude) e registros DEC-001 e DEC-002 em `docs/decisoes/`. O código é enviado ao repositório depois de aplicada a migração no Supabase; nesta data subiu só a documentação.
+- **Coordenadas das faculdades e geocodificação das escolas** Julia: tabela `ies_local_oferta` com os 39 campi presenciais (endereço oficial + OpenStreetMap/CNEFE), pipeline `geocodificacao` (geocodebr/IBGE CNEFE) para as escolas sem coordenada oficial, migrations 004 e 005, endereço `/mapa/instituicoes` na API (escolas e faculdades com latitude e longitude) e registros DEC-001 e DEC-002 em `docs/decisoes/`.
 - **Documentação no padrão do repositório-modelo** Julia (revisando o material do Daniel): README no formato do template, guia técnico em `backend/README.md`, requisitos e casos de uso alinhados, arquitetura, testes, decisões DEC-003 a DEC-007, continuidade, backlog, dicionário de dados atualizado.
 - **Organização da documentação** Daniel: reorganização dos documentos do projeto na pasta `docs/`.
 - **Adicionando registro de atualizações** Daniel: antigos commits registrados na seção de atualizações.
