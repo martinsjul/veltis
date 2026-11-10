@@ -103,6 +103,9 @@ O projeto começou no 1º semestre de 2026 com a estrutura de pastas e o README 
 
 ## Atualizações
 
+### 2026-11-10
+
+- **Otimização do Front e Pins das Instituições de Superior** Daniel: mapa consegue exibir todas as instituições, informações das instituições carregam mais rápido, e os filtros funcionam corretamente por rede, cidade e/ou nome.
 
 ### 2026-11-06
 
