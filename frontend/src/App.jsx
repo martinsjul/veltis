@@ -3,22 +3,30 @@ import { AlertTriangle, PanelRightOpen } from 'lucide-react'
 import FilterSidebar from './components/FilterSidebar'
 import InstitutionPanel from './components/InstitutionPanel'
 import MapView from './components/MapView'
-import { getInstituicoes } from './services/institutionService'
-import { matchesQuery } from './utils/institution'
+import { getCatalogData, getMapInstitutions } from './services/institutionService'
+import { matchesQuery, normalizarTexto } from './utils/institution'
+
+const MIN_SEARCH_LENGTH = 2
+const SEARCH_DEBOUNCE_MS = 350
 
 const INITIAL_FILTERS = {
   query: '',
   municipio: '',
-  tipos: [],
+  niveis: [],
   redes: [],
 }
 
 export default function App() {
   const [institutions, setInstitutions] = useState([])
+  const [municipalityOptions, setMunicipalityOptions] = useState([])
+  const [municipalitiesGeoJson, setMunicipalitiesGeoJson] = useState(null)
   const [selectedInstitution, setSelectedInstitution] = useState(null)
   const [filters, setFilters] = useState(INITIAL_FILTERS)
   const [loading, setLoading] = useState(true)
+  const [loadingInstitutions, setLoadingInstitutions] = useState(false)
   const [error, setError] = useState('')
+  const [institutionsError, setInstitutionsError] = useState('')
+  const [debouncedQuery, setDebouncedQuery] = useState('')
 
   useEffect(() => {
     let active = true
@@ -26,10 +34,14 @@ export default function App() {
     async function load() {
       try {
         setLoading(true)
-        const data = await getInstituicoes()
-        if (active) setInstitutions(data)
+        const catalog = await getCatalogData()
+        if (active) {
+          setInstitutions(catalog.institutions || [])
+          setMunicipalityOptions(catalog.municipalities || [])
+          setMunicipalitiesGeoJson(catalog.municipalitiesGeoJson || null)
+        }
       } catch (err) {
-        if (active) setError(err.message || 'Não foi possível carregar as instituições.')
+        if (active) setError(err.message || 'Não foi possível carregar a lista de municípios.')
       } finally {
         if (active) setLoading(false)
       }
@@ -42,19 +54,68 @@ export default function App() {
     }
   }, [])
 
+  // Espera o usuário parar de digitar antes de consultar a API.
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(filters.query.trim()), SEARCH_DEBOUNCE_MS)
+    return () => clearTimeout(timer)
+  }, [filters.query])
+
   const municipalities = useMemo(
-    () => [...new Set(institutions.map((item) => item.municipio).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
-    [institutions],
+    () => municipalityOptions.map((item) => (typeof item === 'string' ? item : item.nome)).filter(Boolean),
+    [municipalityOptions],
   )
+
+  // O que será buscado na API: um município (escolhido no filtro, ou digitado por inteiro na busca)
+  // ou, sem município, uma busca por nome. Sem nenhum dos dois, nada é carregado.
+  const scope = useMemo(() => {
+    const wantedName = filters.municipio || debouncedQuery
+    const match = wantedName
+      ? municipalityOptions.find((item) => normalizarTexto(item.nome || '') === normalizarTexto(wantedName))
+      : null
+    if (match) return { municipioCodigo: match.codigo || '', municipioNome: match.nome, busca: '' }
+    if (filters.municipio) return { municipioCodigo: '', municipioNome: filters.municipio, busca: '' }
+    if (debouncedQuery.length >= MIN_SEARCH_LENGTH) return { municipioCodigo: '', municipioNome: '', busca: debouncedQuery }
+    return null
+  }, [filters.municipio, debouncedQuery, municipalityOptions])
+
+  const scopeKey = scope ? `${scope.municipioCodigo}|${scope.municipioNome}|${scope.busca}` : ''
+
+  useEffect(() => {
+    if (!scope) {
+      setInstitutions([])
+      setLoadingInstitutions(false)
+      setInstitutionsError('')
+      return undefined
+    }
+
+    const controller = new AbortController()
+    setLoadingInstitutions(true)
+    setInstitutionsError('')
+    getMapInstitutions({ ...scope, signal: controller.signal })
+      .then((items) => {
+        if (!controller.signal.aborted) setInstitutions(items)
+      })
+      .catch((err) => {
+        if (controller.signal.aborted || err.name === 'AbortError') return
+        setInstitutions([])
+        setInstitutionsError(err.message || 'Não foi possível carregar as instituições.')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingInstitutions(false)
+      })
+
+    return () => controller.abort()
+    // scopeKey representa o conteúdo de `scope`.
+  }, [scopeKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredInstitutions = useMemo(() => {
     return institutions.filter((institution) => {
       const queryMatches = matchesQuery(institution, filters.query)
-      const municipioMatches = !filters.municipio || institution.municipio === filters.municipio
-      const tipoMatches = !filters.tipos.length || filters.tipos.includes(institution.tipo)
+      const municipioMatches = !filters.municipio || normalizarTexto(institution.municipio || '') === normalizarTexto(filters.municipio)
+      const nivelMatches = !filters.niveis.length || filters.niveis.includes(institution.categoria)
       const redeMatches = !filters.redes.length || filters.redes.includes(institution.rede)
 
-      return queryMatches && municipioMatches && tipoMatches && redeMatches
+      return queryMatches && municipioMatches && nivelMatches && redeMatches
     })
   }, [institutions, filters])
 
@@ -76,12 +137,16 @@ export default function App() {
         municipalities={municipalities}
         resultCount={filteredInstitutions.length}
         totalCount={institutions.length}
+        hasScope={Boolean(scope)}
+        loadingInstitutions={loadingInstitutions}
         onReset={resetFilters}
       />
 
       <main className="map-area">
         <MapView
           institutions={filteredInstitutions}
+          municipalitiesGeoJson={municipalitiesGeoJson}
+          selectedMunicipality={filters.municipio}
           selectedInstitution={selectedInstitution}
           onSelect={setSelectedInstitution}
         />
@@ -91,7 +156,18 @@ export default function App() {
           Região Metropolitana de Sorocaba
         </div>
 
-        {loading && <div className="floating-message">Carregando instituições...</div>}
+        {loading && <div className="floating-message">Carregando mapa...</div>}
+
+        {!loading && !error && loadingInstitutions && (
+          <div className="floating-message">Buscando instituições...</div>
+        )}
+
+        {!loading && !error && institutionsError && (
+          <div className="floating-message error-message">
+            <AlertTriangle size={17} />
+            {institutionsError}
+          </div>
+        )}
 
         {error && (
           <div className="floating-message error-message">
@@ -99,6 +175,7 @@ export default function App() {
             {error}
           </div>
         )}
+
       </main>
 
       {selectedInstitution && (
@@ -119,7 +196,7 @@ export default function App() {
       {!selectedInstitution && (
         <div className="map-tip">
           <PanelRightOpen size={16} />
-          Selecione um ponto no mapa para ver os detalhes
+          Escolha um município (ou pesquise) e selecione um ponto para ver os detalhes
         </div>
       )}
     </div>

@@ -1,5 +1,4 @@
 import { Search, SlidersHorizontal, RotateCcw, MapPinned } from 'lucide-react'
-import { TIPO_LABELS } from '../utils/institution'
 
 export default function FilterSidebar({
   filters,
@@ -7,12 +6,13 @@ export default function FilterSidebar({
   municipalities,
   resultCount,
   totalCount,
+  hasScope = false,
+  loadingInstitutions = false,
   onReset,
 }) {
   return (
     <aside className="sidebar sidebar-left">
       <div className="brand-block">
-        <div className="brand-mark">V</div>
         <div>
           <div className="brand-name">Veltis</div>
           <div className="brand-subtitle">Mapeamento educacional</div>
@@ -35,9 +35,16 @@ export default function FilterSidebar({
           </div>
           <div className="result-counter">
             <MapPinned size={14} />
-            <span>
-              <strong>{resultCount}</strong> de {totalCount} instituições no mapa
-            </span>
+            {!hasScope ? (
+              <span>Escolha um município ou pesquise pelo nome para ver as instituições.</span>
+            ) : loadingInstitutions ? (
+              <span>Buscando instituições...</span>
+            ) : (
+              <span>
+                <strong>{resultCount}</strong>
+                {resultCount !== totalCount ? ` de ${totalCount}` : ''} instituições no mapa
+              </span>
+            )}
           </div>
         </section>
 
@@ -52,7 +59,7 @@ export default function FilterSidebar({
               value={filters.municipio}
               onChange={(event) => onChange({ municipio: event.target.value })}
             >
-              <option value="">Todos os municípios</option>
+              <option value="">-</option>
               {municipalities.map((municipio) => (
                 <option key={municipio} value={municipio}>
                   {municipio}
@@ -61,20 +68,23 @@ export default function FilterSidebar({
             </select>
           </FilterField>
 
-          <FilterField label="Tipo de instituição">
+          <FilterField label="Nível de ensino">
             <div className="chip-grid">
-              {Object.entries(TIPO_LABELS).map(([value, label]) => {
-                const active = filters.tipos.includes(value)
+              {[
+                ['Escola', 'Educação básica'],
+                ['Ensino superior', 'Ensino superior'],
+              ].map(([value, label]) => {
+                const active = filters.niveis.includes(value)
                 return (
                   <button
                     type="button"
                     key={value}
                     className={`filter-chip ${active ? 'active' : ''}`}
                     onClick={() => {
-                      const tipos = active
-                        ? filters.tipos.filter((item) => item !== value)
-                        : [...filters.tipos, value]
-                      onChange({ tipos })
+                      const niveis = active
+                        ? filters.niveis.filter((item) => item !== value)
+                        : [...filters.niveis, value]
+                      onChange({ niveis })
                     }}
                   >
                     {label}

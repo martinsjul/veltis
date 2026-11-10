@@ -285,18 +285,33 @@ button {
 }
 
 .map-marker {
+  /* Não aplique transform no elemento raiz: o MapTiler usa transform para posicioná-lo no mapa. */
+  width: 28px;
+  height: 30px;
+  padding: 0;
+  /* O SDK posiciona o elemento raiz com transform + position:absolute.
+     Não sobrescrever position/transform aqui: isso fazia os pins deslizarem no zoom. */
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.22));
+}
+
+.map-marker-pin {
   width: 22px;
   height: 22px;
-  padding: 0;
-  position: relative;
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  display: block;
   border: 3px solid white;
   border-radius: 50% 50% 50% 0;
   background: var(--marker-color);
   transform: rotate(-45deg);
-  box-shadow: 0 5px 13px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
-.map-marker span {
+.map-marker-pin i {
   width: 6px;
   height: 6px;
   position: absolute;
@@ -306,7 +321,7 @@ button {
   background: white;
 }
 
-.map-marker:hover {
+.map-marker:hover .map-marker-pin {
   filter: brightness(1.1);
 }
 
@@ -541,37 +556,127 @@ button {
 
 .course-list {
   display: grid;
-  gap: 9px;
+  gap: 11px;
 }
 
 .course-card {
-  padding: 13px;
+  padding: 14px;
   border: 1px solid var(--line);
-  border-radius: 13px;
+  border-radius: 15px;
   background: #f8fbf9;
 }
 
+.course-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.course-source {
+  display: block;
+  margin-bottom: 5px;
+  color: #789097;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 .course-card h3 {
+  margin: 0;
   font-family: Manrope, sans-serif;
   color: var(--ink);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.35;
 }
 
-.course-meta,
-.course-bottom {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 9px;
-  color: #6b8086;
+.course-year {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 28px;
+  padding: 0 8px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
   font-size: 11px;
+  font-weight: 800;
 }
 
-.course-bottom {
-  color: var(--accent-dark);
+.course-origin-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-top: 11px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #d6e3de;
+  color: #748a90;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.course-origin-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.course-data-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 11px;
+}
+
+.course-data {
+  min-width: 0;
+  padding: 9px 10px;
+  border-radius: 11px;
+  background: white;
+  border: 1px solid #e3ebe7;
+}
+
+.course-data span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #819398;
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.course-data strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 11px;
+  line-height: 1.4;
   font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.course-footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  color: var(--accent-dark);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.badge-level {
+  background: #edf3ed;
+  color: #55715e;
+}
+
+@media (max-width: 460px) {
+  .course-data-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mobile-detail-backdrop {
@@ -636,4 +741,35 @@ button {
     left: 12px;
     bottom: 12px;
   }
+}
+
+.api-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(720px, calc(100vw - 420px));
+  color: #865b17;
+  border-color: #f0d7a8;
+  background: rgba(255, 249, 235, 0.96);
+}
+
+@media (max-width: 760px) {
+  .api-warning {
+    max-width: calc(100vw - 32px);
+    top: 62px;
+  }
+}
+
+.detail-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  color: #46656b;
+  background: #eaf4f0;
+  border: 1px solid #d5e8e0;
+  font-size: 12px;
+  font-weight: 700;
 }

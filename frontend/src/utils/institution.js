@@ -1,10 +1,3 @@
-export const TIPO_LABELS = {
-  Escola: 'Escola',
-  ETEC: 'ETEC',
-  FATEC: 'FATEC',
-  'Faculdade/Universidade': 'Ensino superior',
-}
-
 export const TIPO_COLORS = {
   Escola: '#2A6F97',
   ETEC: '#0E7490',
@@ -31,6 +24,7 @@ export function matchesQuery(instituicao, query) {
   return [
     instituicao.nome,
     instituicao.sigla,
+    instituicao.nomeInstituicao,
     instituicao.municipio,
     instituicao.tipo,
     instituicao.rede,
