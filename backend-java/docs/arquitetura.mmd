@@ -1,0 +1,7 @@
+flowchart LR
+    C["Cliente<br/>Swagger · Postman · Frontend"] -- "HTTP + JSON" --> CT["Controller<br/>@RestController<br/>valida com @Valid"]
+    CT -- "DTO Request" --> S["Service<br/>@Service @Transactional<br/>regras de negócio"]
+    S -- "entidade" --> R["Repository<br/>JpaRepository"]
+    R -- "SQL (Hibernate)" --> DB[("H2<br/>jdbc:h2:mem:veltis")]
+    S <-. "entidade ⇄ DTO" .-> M["Mapper"]
+    CT -. "exceção" .-> E["TratadorDeErros<br/>@RestControllerAdvice<br/>400 · 404 · 409"]

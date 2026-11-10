@@ -1,0 +1,75 @@
+erDiagram
+    ESCOLA ||--o| LOCALIZACAO_ESCOLA : "1:1"
+    ESCOLA ||--o{ ESCOLA_CURSO_TECNICO : "N:N"
+    CURSO_TECNICO ||--o{ ESCOLA_CURSO_TECNICO : "N:N"
+    MUNICIPIO ||--o{ ESCOLA : "1:N"
+    MUNICIPIO ||--o{ CAMPUS : "1:N"
+    MUNICIPIO ||--o{ CURSO_SUPERIOR : "1:N"
+    INSTITUICAO_ENSINO_SUPERIOR ||--o{ CAMPUS : "1:N"
+    INSTITUICAO_ENSINO_SUPERIOR ||--o{ CURSO_SUPERIOR : "1:N"
+
+    MUNICIPIO {
+        varchar codigo PK "código IBGE, 7 dígitos"
+        varchar nome
+        bigint populacao_2022
+        double area_km2
+    }
+    ESCOLA {
+        bigint codigo_inep PK
+        varchar nome
+        enum dependencia
+        enum situacao
+        varchar endereco
+        varchar cep
+        varchar telefone
+        boolean oferece_ensino_medio
+        varchar municipio_codigo FK
+    }
+    LOCALIZACAO_ESCOLA {
+        bigint id PK
+        double latitude
+        double longitude
+        varchar fonte
+        varchar precisao
+        bigint escola_codigo FK "UNIQUE"
+    }
+    CURSO_TECNICO {
+        bigint codigo PK
+        varchar nome
+        varchar area
+    }
+    ESCOLA_CURSO_TECNICO {
+        bigint escola_codigo PK,FK
+        bigint curso_codigo PK,FK
+    }
+    INSTITUICAO_ENSINO_SUPERIOR {
+        bigint codigo_ies PK
+        varchar nome
+        varchar sigla
+        enum rede
+        varchar organizacao_academica
+    }
+    CAMPUS {
+        bigint id PK
+        varchar nome
+        varchar endereco
+        varchar bairro
+        varchar cep
+        double latitude
+        double longitude
+        enum precisao
+        bigint instituicao_codigo FK
+        varchar municipio_codigo FK
+    }
+    CURSO_SUPERIOR {
+        bigint id PK
+        bigint codigo_emec "UNIQUE"
+        varchar nome
+        enum grau
+        varchar area
+        boolean gratuito
+        int vagas
+        int matriculas
+        bigint instituicao_codigo FK
+        varchar municipio_codigo FK
+    }

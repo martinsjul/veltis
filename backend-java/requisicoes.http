@@ -1,0 +1,147 @@
+### Exemplos de requisições da API Veltis (Java/Spring Boot)
+### Abra no VS Code com a extensão "REST Client" e clique em "Send Request" acima de cada uma.
+### Também dá para copiar para o Postman/Insomnia ou testar pelo Swagger: http://localhost:8080/swagger-ui.html
+
+@api = http://localhost:8080
+
+### ------------------------------------------------------------ Municípios
+### Lista os 27 municípios
+GET {{api}}/municipios
+
+### Busca Sorocaba
+GET {{api}}/municipios/3552205
+
+### Escolas de Sorocaba (relacionamento 1:N), paginadas
+GET {{api}}/municipios/3552205/escolas?page=0&size=5
+
+### Cria um município (201 Created)
+POST {{api}}/municipios
+Content-Type: application/json
+
+{
+  "codigo": "3599999",
+  "nome": "Cidade de Demonstração",
+  "populacao2022": 1000,
+  "areaKm2": 12.5
+}
+
+### Validação: código com 3 dígitos e nome vazio (400 Bad Request)
+POST {{api}}/municipios
+Content-Type: application/json
+
+{
+  "codigo": "123",
+  "nome": ""
+}
+
+### Regra de negócio: não exclui município que tem escolas (409 Conflict)
+DELETE {{api}}/municipios/3552205
+
+### ------------------------------------------------------------ Escolas
+### Lista com filtros: ETECs estaduais de Sorocaba
+GET {{api}}/escolas?municipio=3552205&dependencia=ESTADUAL&nome=etec
+
+### Ficha da ETEC Fernando Prestes: município (N:1), localização (1:1) e cursos (N:N)
+GET {{api}}/escolas/35016238
+
+### Cria uma escola: o município vem pelo código e o service faz a associação
+POST {{api}}/escolas
+Content-Type: application/json
+
+{
+  "codigoInep": 99999999,
+  "nome": "ETEC de Demonstração",
+  "municipioCodigo": "3552205",
+  "dependencia": "ESTADUAL",
+  "situacao": "EM_ATIVIDADE",
+  "endereco": "Rua Exemplo, 100",
+  "cep": "18040810",
+  "telefone": "(15) 3200-0000",
+  "ofereceEnsinoMedio": true
+}
+
+### Altera a escola (o código do corpo tem que ser o mesmo da URL)
+PUT {{api}}/escolas/99999999
+Content-Type: application/json
+
+{
+  "codigoInep": 99999999,
+  "nome": "ETEC de Demonstração (alterada)",
+  "municipioCodigo": "3552205",
+  "dependencia": "ESTADUAL",
+  "situacao": "EM_ATIVIDADE",
+  "cep": "18040810",
+  "ofereceEnsinoMedio": true
+}
+
+### Define o ponto da escola no mapa (relacionamento 1:1)
+PUT {{api}}/escolas/99999999/localizacao
+Content-Type: application/json
+
+{
+  "latitude": -23.5116,
+  "longitude": -47.4712,
+  "fonte": "Levantamento da equipe",
+  "precisao": "numero"
+}
+
+### Validação: latitude e longitude trocadas, fora de SP (400)
+PUT {{api}}/escolas/99999999/localizacao
+Content-Type: application/json
+
+{
+  "latitude": -47.4712,
+  "longitude": -23.5116,
+  "fonte": "Teste",
+  "precisao": "numero"
+}
+
+### Associa o curso técnico "Desenvolvimento de Sistemas" (6082) à escola (N:N)
+POST {{api}}/escolas/99999999/cursos-tecnicos/6082
+
+### Cursos da escola
+GET {{api}}/escolas/99999999/cursos-tecnicos
+
+### Lado inverso do N:N: escolas que oferecem Desenvolvimento de Sistemas
+GET {{api}}/cursos-tecnicos/6082/escolas
+
+### Remove a associação
+DELETE {{api}}/escolas/99999999/cursos-tecnicos/6082
+
+### Exclui a escola (a localização vai junto; o curso continua existindo)
+DELETE {{api}}/escolas/99999999
+
+### ------------------------------------------------------------ Faculdades
+### Instituições com curso presencial na RMS
+GET {{api}}/instituicoes
+
+### Fatec Sorocaba: campi (1:N) e cursos (1:N)
+GET {{api}}/instituicoes/33/campi
+
+###
+GET {{api}}/instituicoes/33/cursos
+
+### Cria um campus: instituição e município pelos códigos (N:1 e N:1)
+POST {{api}}/campi
+Content-Type: application/json
+
+{
+  "nome": "Fatec Sorocaba - Unidade de Demonstração",
+  "instituicaoCodigo": 33,
+  "municipioCodigo": "3552205",
+  "endereco": "Rua Exemplo, 200",
+  "cep": "18013280",
+  "latitude": -23.49,
+  "longitude": -47.44,
+  "precisao": "NUMERO"
+}
+
+### Cursos superiores presenciais oferecidos em Sorocaba
+GET {{api}}/cursos-superiores?municipio=3552205
+
+### ------------------------------------------------------------ Mapa (usado pelo frontend)
+### Escolas e faculdades com latitude e longitude
+GET {{api}}/mapa/instituicoes?municipio=3552205
+
+### Só ETECs e FATECs
+GET {{api}}/mapa/instituicoes?tipo=etec&tipo=fatec

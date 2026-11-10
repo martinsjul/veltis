@@ -1,0 +1,69 @@
+codigo;nome;area
+1002;Análises clínicas;Ambiente e saúde
+1006;Enfermagem;Ambiente e saúde
+1008;Estética;Ambiente e saúde
+1009;Farmácia;Ambiente e saúde
+1012;Saúde Bucal;Ambiente e saúde
+1015;Massoterapia;Ambiente e saúde
+1016;Meio Ambiente;Ambiente e saúde
+1018;Nutrição e Dietética;Ambiente e saúde
+1021;Podologia;Ambiente e saúde
+1022;Prótese Dentária;Ambiente e saúde
+1023;Radiologia;Ambiente e saúde
+1999;Outros - Eixo Ambiente e Saúde;Ambiente e saúde
+2034;Secretaria Escolar;Desenvolvimento educacional e social
+3036;Automação Industrial;Controle e processos industriais
+3037;Eletroeletrônica;Controle e processos industriais
+3038;Eletromecânica;Controle e processos industriais
+3039;Eletrônica;Controle e processos industriais
+3040;Eletrotécnica;Controle e processos industriais
+3041;Manutenção Automotiva;Controle e processos industriais
+3043;Mecânica;Controle e processos industriais
+3044;Mecatrônica;Controle e processos industriais
+3058;Sistemas de Energia Renovável;Controle e processos industriais
+3060;Manutenção de Máquinas Industriais;Controle e processos industriais
+4050;Administração;Gestão e negócios
+4052;Comércio Exterior;Gestão e negócios
+4053;Contabilidade;Gestão e negócios
+4055;Finanças;Gestão e negócios
+4056;Logística;Gestão e negócios
+4057;Marketing;Gestão e negócios
+4058;Qualidade;Gestão e negócios
+4059;Recursos Humanos;Gestão e negócios
+4060;Secretariado;Gestão e negócios
+4065;Vendas;Gestão e negócios
+4066;Serviços Jurídicos;Gestão e negócios
+4999;Outros - Eixo Gestão e Negócios;Gestão e negócios
+5066;Agenciamento de Viagem;Turismo, hospitalidade e lazer
+5067;Gastronomia;Turismo, hospitalidade e lazer
+5068;Eventos;Turismo, hospitalidade e lazer
+5069;Guia de Turismo;Turismo, hospitalidade e lazer
+5070;Hospedagem;Turismo, hospitalidade e lazer
+5999;Outros - Eixo Turismo, hospitalidade e Lazer;Turismo, hospitalidade e lazer
+6073;Informática;Informação e comunicação
+6074;Informática para Internet;Informação e comunicação
+6075;Manutenção e Suporte em Informática;Informação e comunicação
+6076;Programação de Jogos Digitais;Informação e comunicação
+6077;Redes de Computadores;Informação e comunicação
+6081;Computação Gráfica;Informação e comunicação
+6082;Desenvolvimento de Sistemas;Informação e comunicação
+6999;Outros - Eixo Informação e Comunicação;Informação e comunicação
+7084;Desenho de Construção Civil;Infraestrutura
+7085;Edificações;Infraestrutura
+9120;Alimentos;Produção alimentícia
+9124;Confeitaria;Produção alimentícia
+9125;Panificação;Produção alimentícia
+10129;Teatro;Produção cultural e design
+10134;Design Gráfico;Produção cultural e design
+10139;Design de Interiores;Produção cultural e design
+10145;Modelagem do Vestuário;Produção cultural e design
+10146;Multimídia;Produção cultural e design
+10147;Paisagismo;Produção cultural e design
+10150;Produção de Moda;Produção cultural e design
+10151;Publicidade;Produção cultural e design
+11175;Química;Produção industrial
+11999;Outros - Eixo Produção Industrial;Produção industrial
+12173;Agronegócio;Recursos naturais
+12174;Agropecuária;Recursos naturais
+12185;Zootecnia;Recursos naturais
+13182;Segurança do Trabalho;Segurança

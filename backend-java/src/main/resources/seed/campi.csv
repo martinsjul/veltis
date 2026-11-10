@@ -1,0 +1,40 @@
+instituicao_codigo;municipio_codigo;nome;endereco;bairro;cep;latitude;longitude;precisao
+7;3552205;UFSCar Campus Sorocaba;Rodovia João Leme dos Santos, Km 110;Itinga;18052780;-23.583943;-47.523190;edificio
+33;3552205;Fatec Sorocaba;Avenida Engenheiro Carlos Reinaldo Mendes, 2015;Alto da Boa Vista;18013280;-23.480133;-47.425939;edificio
+56;3552205;Unesp Instituto de Ciência e Tecnologia;Avenida Três de Março, 511;Alto da Boa Vista;18087180;-23.479073;-47.417225;edificio
+150;3552205;UNISO Cidade Universitária;Rodovia Raposo Tavares, s/n - Cidade Universitária;Jardim Novo Eldorado;18023000;-23.500439;-47.397914;edificio
+162;3557006;Belas Artes Campus Votorantim;Avenida Gisele Constantino, 1850;Parque Campolim;;-23.536049;-47.464424;numero
+276;3552205;FADI;Rua Doutora Ursulina Lopes Torres, 123;Vergueiro;18030103;-23.505996;-47.462527;edificio
+322;3552205;UNIP Campus Sorocaba;Avenida Independência, 210;Éden;;-23.459147;-47.419711;edificio
+368;3552205;FEFISO (ACM Sorocaba);Rua da Penha, 680;Centro;18010002;-23.499956;-47.460774;edificio
+440;3523909;FADITU;Avenida Tiradentes, 1817;Parque Industrial;13309640;-23.291380;-47.299339;numero
+533;3522307;Campus FII;Rodovia Raposo Tavares, Km 162;Nova Itapetininga;18203340;-23.599377;-48.023289;edificio
+546;3552205;PUC-SP Campus Sorocaba (FCMS);Rua Joubert Wey, 290;;;-23.509736;-47.457144;edificio
+605;3522307;USCS Campus Itapetininga;Avenida Doutor Ciro Albuquerque, 4750;Taboãozinho;18200021;-23.571709;-47.994167;edificio
+672;3552205;Facens;Rodovia Senador José Ermírio de Moraes, 1425;Alto da Boa Vista;18087125;-23.470560;-47.429501;edificio
+923;3550605;UniSão Roque;Rua Padre Marçal, 30;Centro;18130100;-23.531414;-47.136026;numero
+1149;3545209;CEUNSP Campus Brasital;Praça Antônio Vieira Tavares, 73;Centro;13320219;-23.206010;-47.298309;edificio
+1149;3523909;CEUNSP Campus Patrocínio;Rua do Patrocínio, 716;Centro;13300200;-23.268670;-47.299214;edificio
+1149;3523909;CEUNSP Campus Regente Feijó;Praça Regente Feijó, 181;Centro;13300023;-23.268905;-47.297351;edificio
+1219;3522307;IIES;Rua Izolina de Morais Rosa, 727;Vila Nastri;18206320;-23.616423;-48.059923;edificio
+1317;3522307;UniFSP Unidade Itapetininga;Avenida José de Almeida Carvalho, 1695;Vila Leonor;;-23.576733;-48.024839;edificio
+1545;3507001;Faculdade de Boituva;Rodovia SP-129, Km 14;Campo de Boituva;18550000;-23.273557;-47.687418;rua
+1561;3552205;ESAMC Sorocaba;Rua Arthur Gomes, 51;Centro;18035490;-23.503570;-47.463846;numero
+1810;3507001;IFSP Câmpus Boituva;Rua Zélia de Lima Rosa, 100;Recanto das Primaveras I;18552252;-23.308394;-47.648230;rua
+1810;3522307;IFSP Câmpus Itapetininga;Avenida João Olímpio de Oliveira, 1561;Vila Asem;18202000;-23.593911;-48.018660;edificio
+1810;3545209;IFSP Câmpus Salto;Avenida dos Três Poderes, 375;Residencial Central Parque;13325047;-23.186167;-47.303932;edificio
+1810;3552205;IFSP Câmpus Sorocaba;Rua Nhonhô Pires, 250;Vila Lucy;18043060;-23.502227;-47.478758;edificio
+1810;3550605;IFSP Câmpus São Roque;Rodovia Prefeito Quintino de Lima, 2100;Paisagem Colonial;18145090;-23.554477;-47.150225;edificio
+3940;3554003;FAESB;Rua Onze de Agosto, 2900;Valinho;18277000;-23.355550;-47.872730;edificio
+4655;3552205;Faculdade Anhanguera de Sorocaba;Avenida Doutor Armando Pannunzio, 1478;Jardim Vera Cruz;18050000;-23.526075;-47.491249;edificio
+13796;3540606;Faculdade de Porto Feliz;Praça Doutor José Sacramento e Silva, 13;Centro;;-23.210394;-47.524854;numero
+14401;3540606;FAMO;Avenida Monsenhor Seckler, s/n;Vila América;18540000;-23.213191;-47.511763;rua
+15693;3522307;Fatec Itapetininga;Rua João Vieira Camargo, 104;Vila Barth;18205600;-23.600942;-48.051378;edificio
+15695;3523909;Fatec Itu;Avenida Tiradentes, 1211;Jardim das Indústrias;13309640;-23.290457;-47.296346;edificio
+15803;3554003;Fatec Tatuí;Rodovia Mario Batista Mori, 971;Jardim Aeroporto;;-23.330138;-47.867872;edificio
+17598;3552205;Faculdade Prof. Wlademir dos Santos;Avenida Professor Arthur Fonseca, 633;Jardim Emília;18031005;-23.516319;-47.461693;numero
+17691;3552205;Faculdade SENAI Gaspar Ricardo Junior;Praça Roberto Mange, s/n;Jardim Santa Rosália;18090110;-23.486393;-47.449208;edificio
+18817;3550605;Fatec São Roque;Rua Marechal Deodoro da Fonseca, 132;Centro;18130070;-23.532995;-47.133968;numero
+21344;3557006;Faculdade UNICPO;Rua Albertina Nascimento, 132;Centro;18110095;-23.541836;-47.446251;numero
+23893;3522307;Faculdade Anhanguera de Itapetininga;Rua Doutor Coutinho, 733;Centro;18200358;-23.577927;-48.039293;edificio
+28988;3557006;Fatec Votorantim;Avenida Juscelino Kubitschek de Oliveira, 279;Centro;18110008;-23.531258;-47.449631;edificio

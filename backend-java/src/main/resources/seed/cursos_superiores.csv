@@ -1,0 +1,376 @@
+instituicao_codigo;municipio_codigo;codigo_emec;nome;grau;area;gratuito;vagas;matriculas
+7;3552205;115084;Administração;Bacharelado;Negócios, administração e direito;t;73;255
+7;3552205;112680;Ciência Da Computação;Bacharelado;Computação e Tecnologias da Informação e Comunicação (TIC);t;75;261
+7;3552205;96403;Ciências Biológicas;Licenciatura;Educação;t;44;165
+7;3552205;115096;Ciências Biológicas;Licenciatura;Educação;t;47;110
+7;3552205;96401;Ciências Biológicas;Bacharelado;Ciências naturais, matemática e estatística;t;57;172
+7;3552205;112676;Ciências Econômicas;Bacharelado;Ciências sociais, comunicação e informação;t;83;297
+7;3552205;96407;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;t;76;276
+7;3552205;96436;Engenharia Florestal;Bacharelado;Agricultura, silvicultura, pesca e veterinária;t;72;171
+7;3552205;115088;Física;Licenciatura;Educação;t;60;61
+7;3552205;115080;Geografia;Licenciatura;Educação;t;62;212
+7;3552205;115086;Matemática;Licenciatura;Educação;t;55;80
+7;3552205;115076;Pedagogia;Licenciatura;Educação;t;72;245
+7;3552205;115092;Química;Licenciatura;Educação;t;59;94
+7;3552205;96405;Turismo;Bacharelado;Serviços;t;51;145
+33;3552205;115664;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;196;493
+33;3552205;1637930;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;40;50
+33;3552205;1154732;Eletrônica Automotiva;Tecnológico;Engenharia, produção e construção;t;162;52
+33;3552205;1150239;Fabricação Mecânica;Tecnológico;Engenharia, produção e construção;t;290;457
+33;3552205;1541830;Gestão Da Qualidade;Tecnológico;Negócios, administração e direito;t;242;100
+33;3552205;1150252;Logística;Tecnológico;Negócios, administração e direito;t;192;126
+33;3552205;1637931;Logística;Tecnológico;Negócios, administração e direito;t;40;25
+33;3552205;1453297;Manufatura Avançada;Tecnológico;Engenharia, produção e construção;t;208;70
+33;3552205;1150240;Polímeros;Tecnológico;Engenharia, produção e construção;t;206;114
+33;3552205;1150241;Processos Metalúrgicos;Tecnológico;Engenharia, produção e construção;t;187;61
+33;3552205;1285046;Projetos Mecânicos;Tecnológico;Engenharia, produção e construção;t;212;315
+33;3552205;1150234;Sistemas Biomédicos;Tecnológico;Engenharia, produção e construção;t;218;116
+56;3552205;73948;Engenharia Ambiental;Bacharelado;Engenharia, produção e construção;t;44;205
+56;3552205;73946;Engenharia De Controle E Automação;Bacharelado;Engenharia, produção e construção;t;44;231
+150;3552205;50017206;Abi - Educação Física;;Programas básicos;f;283;68
+150;3552205;67899;Administração;Bacharelado;Negócios, administração e direito;f;285;436
+150;3552205;1514555;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;285;205
+150;3552205;1107280;Arquitetura E Urbanismo;Bacharelado;Engenharia, produção e construção;f;421;367
+150;3552205;1111550;Artes Visuais;Licenciatura;Educação;f;141;41
+150;3552205;1382673;Biomedicina;Bacharelado;Saúde e bem-estar;f;282;269
+150;3552205;55096;Ciência Da Computação;Bacharelado;Computação e Tecnologias da Informação e Comunicação (TIC);f;0;0
+150;3552205;1568064;Ciência De Dados E Inteligência Artificial;Bacharelado;Computação e Tecnologias da Informação e Comunicação (TIC);f;283;52
+150;3552205;1279265;Ciências Biológicas;Bacharelado;Ciências naturais, matemática e estatística;f;288;122
+150;3552205;1518244;Ciências Biológicas;Licenciatura;Educação;f;141;8
+150;3552205;4725;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;290;170
+150;3552205;4726;Ciências Econômicas;Bacharelado;Ciências sociais, comunicação e informação;f;286;200
+150;3552205;87106;Comunicação Social - Publicidade E Propaganda;Bacharelado;Negócios, administração e direito;f;292;243
+150;3552205;98182;Comércio Exterior;Bacharelado;Negócios, administração e direito;f;0;70
+150;3552205;1666145;Comércio Exterior;Tecnológico;Negócios, administração e direito;f;146;30
+150;3552205;1110713;Dança;Licenciatura;Educação;f;71;3
+150;3552205;115246;Design;Bacharelado;Artes e humanidades;f;168;214
+150;3552205;1564441;Design De Interiores;Tecnológico;Artes e humanidades;f;284;35
+150;3552205;4735;Direito;Bacharelado;Negócios, administração e direito;f;343;528
+150;3552205;1204182;Educação Física;Bacharelado;Saúde e bem-estar;f;0;28
+150;3552205;1107277;Educação Física;Licenciatura;Educação;f;0;13
+150;3552205;1107276;Enfermagem;Bacharelado;Saúde e bem-estar;f;263;175
+150;3552205;1203323;Engenharia Agronômica;Bacharelado;Agricultura, silvicultura, pesca e veterinária;f;287;168
+150;3552205;106504;Engenharia Ambiental;Bacharelado;Engenharia, produção e construção;f;284;41
+150;3552205;1109540;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;292;133
+150;3552205;1109355;Engenharia Da Computação;Bacharelado;Engenharia, produção e construção;f;290;200
+150;3552205;1203313;Engenharia De Alimentos;Bacharelado;Engenharia, produção e construção;f;281;36
+150;3552205;1203314;Engenharia De Bioprocessos E Biotecnologia;Bacharelado;Engenharia, produção e construção;f;282;42
+150;3552205;1109641;Engenharia De Controle E Automação;Bacharelado;Engenharia, produção e construção;f;287;78
+150;3552205;106506;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;f;281;115
+150;3552205;1109354;Engenharia Elétrica;Bacharelado;Engenharia, produção e construção;f;285;77
+150;3552205;1349104;Engenharia Mecânica;Bacharelado;Engenharia, produção e construção;f;283;95
+150;3552205;1109541;Engenharia Química;Bacharelado;Engenharia, produção e construção;f;284;119
+150;3552205;1108737;Estética E Cosmética;Tecnológico;Serviços;f;162;85
+150;3552205;28663;Farmácia;Bacharelado;Saúde e bem-estar;f;287;125
+150;3552205;4727;Filosofia;Licenciatura;Educação;f;141;32
+150;3552205;1107279;Fisioterapia;Bacharelado;Saúde e bem-estar;f;291;229
+150;3552205;1466157;Fonoaudiologia;Bacharelado;Saúde e bem-estar;f;292;126
+150;3552205;75765;Gastronomia;Tecnológico;Serviços;f;81;36
+150;3552205;1110712;Gestão Comercial;Tecnológico;Negócios, administração e direito;f;143;35
+150;3552205;115244;Gestão Da Qualidade;Tecnológico;Negócios, administração e direito;f;140;18
+150;3552205;113108;Gestão De Equinocultura;Tecnológico;Agricultura, silvicultura, pesca e veterinária;f;142;18
+150;3552205;86614;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;f;141;21
+150;3552205;88620;Gestão Financeira;Tecnológico;Negócios, administração e direito;f;143;31
+150;3552205;4729;História;Licenciatura;Educação;f;145;55
+150;3552205;1203318;Jogos Digitais;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;200;42
+150;3552205;31084;Jornalismo;Bacharelado;Ciências sociais, comunicação e informação;f;285;156
+150;3552205;22212;Letras - Português E Inglês;Licenciatura;Educação;f;141;53
+150;3552205;98375;Logística;Tecnológico;Negócios, administração e direito;f;142;40
+150;3552205;98189;Marketing;Tecnológico;Negócios, administração e direito;f;146;91
+150;3552205;19367;Matemática;Licenciatura;Educação;f;71;8
+150;3552205;1169423;Medicina Veterinária;Bacharelado;Agricultura, silvicultura, pesca e veterinária;f;292;552
+150;3552205;1382674;Moda;Bacharelado;Artes e humanidades;f;103;58
+150;3552205;1107278;Música;Licenciatura;Educação;f;101;13
+150;3552205;52208;Nutrição;Bacharelado;Saúde e bem-estar;f;282;182
+150;3552205;1321966;Odontologia;Bacharelado;Saúde e bem-estar;f;129;256
+150;3552205;63726;Pedagogia;Licenciatura;Educação;f;148;68
+150;3552205;1644138;Pedagogia;Licenciatura;Educação;f;21;13
+150;3552205;1110715;Processos Gerenciais;Tecnológico;Negócios, administração e direito;f;141;13
+150;3552205;1154620;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;176;604
+150;3552205;75768;Química;Licenciatura;Educação;f;140;4
+150;3552205;1203320;Química Industrial;Bacharelado;Ciências naturais, matemática e estatística;f;144;37
+150;3552205;1203321;Relações Internacionais;Bacharelado;Ciências sociais, comunicação e informação;f;288;173
+150;3552205;67725;Relações Públicas;Bacharelado;Negócios, administração e direito;f;280;37
+150;3552205;52210;Sistemas De Informação;Bacharelado;Computação e Tecnologias da Informação e Comunicação (TIC);f;0;1
+150;3552205;67724;Teatro;Licenciatura;Educação;f;145;32
+150;3552205;19366;Terapia Ocupacional;Bacharelado;Saúde e bem-estar;f;286;96
+162;3557006;1385248;Comunicação Social - Publicidade E Propaganda;Bacharelado;Negócios, administração e direito;f;65;50
+162;3557006;1387314;Design De Moda;Tecnológico;Artes e humanidades;f;60;35
+162;3557006;1385223;Design Gráfico;Tecnológico;Artes e humanidades;f;60;28
+276;3552205;6616;Direito;Bacharelado;Negócios, administração e direito;f;240;706
+322;3552205;19514;Administração;Bacharelado;Negócios, administração e direito;f;244;181
+322;3552205;123549;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;238;261
+322;3552205;59713;Arquitetura E Urbanismo;Bacharelado;Engenharia, produção e construção;f;152;131
+322;3552205;76234;Automação Industrial;Tecnológico;Engenharia, produção e construção;f;116;38
+322;3552205;99114;Biomedicina;Bacharelado;Saúde e bem-estar;f;259;309
+322;3552205;19517;Ciência Da Computação;Bacharelado;Computação e Tecnologias da Informação e Comunicação (TIC);f;236;170
+322;3552205;76626;Ciências Biológicas;Licenciatura;Educação;f;80;4
+322;3552205;376626;Ciências Biológicas;Bacharelado;Ciências naturais, matemática e estatística;f;94;74
+322;3552205;77751;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;150;46
+322;3552205;77533;Design Gráfico;Tecnológico;Artes e humanidades;f;116;63
+322;3552205;19516;Direito;Bacharelado;Negócios, administração e direito;f;481;653
+322;3552205;59991;Educação Física;Licenciatura;Educação;f;81;9
+322;3552205;1178022;Educação Física;Bacharelado;Saúde e bem-estar;f;161;94
+322;3552205;59717;Enfermagem;Bacharelado;Saúde e bem-estar;f;305;282
+322;3552205;1161000;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;239;133
+322;3552205;60531;Engenharia De Controle E Automação;Bacharelado;Engenharia, produção e construção;f;115;11
+322;3552205;1522178;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;f;465;28
+322;3552205;1160980;Engenharia Mecânica;Bacharelado;Engenharia, produção e construção;f;73;128
+322;3552205;1184874;Estética E Cosmética;Tecnológico;Serviços;f;119;52
+322;3552205;18752;Farmácia;Bacharelado;Saúde e bem-estar;f;214;248
+322;3552205;18757;Fisioterapia;Bacharelado;Saúde e bem-estar;f;247;242
+322;3552205;1180397;Gestão Da Qualidade;Tecnológico;Negócios, administração e direito;f;118;29
+322;3552205;77134;Gestão Da Tecnologia Da Informação;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;62;20
+322;3552205;65677;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;f;121;101
+322;3552205;77200;Gestão Financeira;Tecnológico;Negócios, administração e direito;f;85;62
+322;3552205;1322218;Jornalismo;Bacharelado;Ciências sociais, comunicação e informação;f;60;0
+322;3552205;59985;Letras - Português E Inglês;Licenciatura;Educação;f;117;19
+322;3552205;1443420;Letras - Tradutor E Intérprete;Bacharelado;Artes e humanidades;f;60;2
+322;3552205;99158;Logística;Tecnológico;Negócios, administração e direito;f;235;95
+322;3552205;65657;Marketing;Tecnológico;Negócios, administração e direito;f;120;61
+322;3552205;1258847;Matemática;Licenciatura;Educação;f;65;1
+322;3552205;5001419;Medicina;Bacharelado;Saúde e bem-estar;f;107;280
+322;3552205;59723;Nutrição;Bacharelado;Saúde e bem-estar;f;163;146
+322;3552205;18768;Odontologia;Bacharelado;Saúde e bem-estar;f;125;170
+322;3552205;59993;Pedagogia;Licenciatura;Educação;f;301;162
+322;3552205;77118;Processos Gerenciais;Tecnológico;Negócios, administração e direito;f;115;5
+322;3552205;18773;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;356;510
+322;3552205;19515;Publicidade E Propaganda;Bacharelado;Negócios, administração e direito;f;117;62
+322;3552205;115754;Radiologia;Tecnológico;Saúde e bem-estar;f;115;29
+322;3552205;115756;Serviço Social;Bacharelado;Saúde e bem-estar;f;80;2
+368;3552205;50017022;Abi - Educação Física;;Programas básicos;f;1112;372
+368;3552205;7873;Educação Física;Licenciatura;Educação;f;8;16
+368;3552205;122596;Educação Física;Bacharelado;Saúde e bem-estar;f;35;153
+440;3523909;1206053;Administração;Bacharelado;Negócios, administração e direito;f;374;23
+440;3523909;1206054;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;394;23
+440;3523909;9096;Direito;Bacharelado;Negócios, administração e direito;f;430;421
+440;3523909;1549422;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;f;153;12
+440;3523909;1549312;Processos Gerenciais;Tecnológico;Negócios, administração e direito;f;146;18
+440;3523909;1261183;Relações Internacionais;Bacharelado;Ciências sociais, comunicação e informação;f;185;27
+533;3522307;11106;Administração;Bacharelado;Negócios, administração e direito;f;112;95
+533;3522307;11108;Direito;Bacharelado;Negócios, administração e direito;f;112;296
+533;3522307;11109;Educação Física;Licenciatura;Educação;f;112;59
+533;3522307;1106642;Educação Física;Bacharelado;Saúde e bem-estar;f;72;102
+546;3552205;11234;Enfermagem;Bacharelado;Saúde e bem-estar;f;35;51
+546;3552205;11233;Medicina;Bacharelado;Saúde e bem-estar;f;129;633
+605;3522307;1586114;Medicina;Bacharelado;Saúde e bem-estar;f;120;325
+672;3552205;1484595;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;415;608
+672;3552205;1365935;Arquitetura E Urbanismo;Bacharelado;Engenharia, produção e construção;f;105;206
+672;3552205;1484596;Banco De Dados;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;60;2
+672;3552205;1597199;Biomedicina;Bacharelado;Saúde e bem-estar;f;223;110
+672;3552205;1469281;Enfermagem;Bacharelado;Saúde e bem-estar;f;220;70
+672;3552205;1300363;Engenharia Agronômica;Bacharelado;Agricultura, silvicultura, pesca e veterinária;f;50;57
+672;3552205;15592;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;220;284
+672;3552205;18252;Engenharia De Computação;Bacharelado;Engenharia, produção e construção;f;357;678
+672;3552205;1119044;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;f;180;270
+672;3552205;15593;Engenharia Elétrica;Bacharelado;Engenharia, produção e construção;f;150;156
+672;3552205;1059600;Engenharia Mecatrônica;Bacharelado;Engenharia, produção e construção;f;151;208
+672;3552205;46900;Engenharia Mecânica;Bacharelado;Engenharia, produção e construção;f;165;300
+672;3552205;1119031;Engenharia Química;Bacharelado;Engenharia, produção e construção;f;150;214
+672;3552205;1484597;Gestão Da Tecnologia Da Informação;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;90;61
+672;3552205;1279658;Jogos Digitais;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;60;31
+672;3552205;1636836;Medicina Veterinária;Bacharelado;Agricultura, silvicultura, pesca e veterinária;f;190;28
+672;3552205;1469282;Odontologia;Bacharelado;Saúde e bem-estar;f;232;96
+672;3552205;1469283;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;230;203
+923;3550605;17545;Administração;Bacharelado;Negócios, administração e direito;f;42;77
+923;3550605;17546;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;30;51
+923;3550605;67967;Direito;Bacharelado;Negócios, administração e direito;f;114;346
+923;3550605;1204036;Educação Física;Licenciatura;Educação;f;0;0
+923;3550605;1204034;Enfermagem;Bacharelado;Saúde e bem-estar;f;67;223
+923;3550605;1204035;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;2;3
+923;3550605;1353921;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;f;0;0
+923;3550605;55782;Pedagogia;Licenciatura;Educação;f;31;76
+923;3550605;1304913;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;134;311
+1149;3523909;5001653;Abi - Educação Física;;Programas básicos;f;561;179
+1149;3523909;17864;Administração;Bacharelado;Negócios, administração e direito;f;414;192
+1149;3545209;20088;Administração;Bacharelado;Negócios, administração e direito;f;321;252
+1149;3523909;97785;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;174;146
+1149;3545209;1382777;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;176;180
+1149;3523909;1454699;Arquitetura E Urbanismo;Bacharelado;Engenharia, produção e construção;f;114;164
+1149;3545209;20089;Arquitetura E Urbanismo;Bacharelado;Engenharia, produção e construção;f;305;179
+1149;3545209;1156633;Automação Industrial;Tecnológico;Engenharia, produção e construção;f;131;69
+1149;3523909;72405;Biomedicina;Bacharelado;Saúde e bem-estar;f;244;380
+1149;3545209;97794;Cinema E Audiovisual;Bacharelado;Artes e humanidades;f;168;116
+1149;3545209;89064;Ciência Da Computação;Bacharelado;Computação e Tecnologias da Informação e Comunicação (TIC);f;107;190
+1149;3523909;1184181;Ciências Biológicas;Bacharelado;Ciências naturais, matemática e estatística;f;80;30
+1149;3545209;1162578;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;155;164
+1149;3523909;17868;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;174;109
+1149;3545209;106841;Comércio Exterior;Tecnológico;Negócios, administração e direito;f;164;61
+1149;3545209;89183;Design De Moda;Tecnológico;Artes e humanidades;f;204;52
+1149;3545209;1169573;Design Gráfico;Tecnológico;Artes e humanidades;f;95;79
+1149;3545209;48549;Direito;Bacharelado;Negócios, administração e direito;f;592;627
+1149;3523909;1051331;Direito;Bacharelado;Negócios, administração e direito;f;146;332
+1149;3523909;415436;Educação Física;Bacharelado;Saúde e bem-estar;f;7;61
+1149;3523909;18271;Educação Física;Licenciatura;Educação;f;1;5
+1149;3523909;72407;Enfermagem;Bacharelado;Saúde e bem-estar;f;411;410
+1149;3545209;1467798;Enfermagem;Bacharelado;Saúde e bem-estar;f;207;57
+1149;3545209;19333;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;123;185
+1149;3545209;1156285;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;f;192;197
+1149;3545209;89157;Engenharia Elétrica;Bacharelado;Engenharia, produção e construção;f;219;117
+1149;3545209;89153;Engenharia Mecatrônica;Bacharelado;Engenharia, produção e construção;f;214;108
+1149;3545209;1382808;Engenharia Mecânica;Bacharelado;Engenharia, produção e construção;f;176;167
+1149;3545209;1454726;Engenharia Química;Bacharelado;Engenharia, produção e construção;f;171;115
+1149;3523909;1382800;Estética E Cosmética;Tecnológico;Serviços;f;204;78
+1149;3523909;89088;Farmácia;Bacharelado;Saúde e bem-estar;f;195;322
+1149;3523909;18593;Fisioterapia;Bacharelado;Saúde e bem-estar;f;268;362
+1149;3545209;97787;Fotografia;Tecnológico;Artes e humanidades;f;160;0
+1149;3523909;89060;Gastronomia;Tecnológico;Serviços;f;261;81
+1149;3523909;106845;Gestão Da Qualidade;Tecnológico;Negócios, administração e direito;f;246;50
+1149;3523909;1382766;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;f;0;27
+1149;3545209;89168;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;f;109;117
+1149;3523909;5041;História;Licenciatura;Educação;f;0;0
+1149;3545209;89090;Jornalismo;Bacharelado;Ciências sociais, comunicação e informação;f;0;14
+1149;3523909;1382770;Logística;Tecnológico;Negócios, administração e direito;f;0;26
+1149;3545209;97788;Logística;Tecnológico;Negócios, administração e direito;f;219;117
+1149;3545209;89172;Marketing;Tecnológico;Negócios, administração e direito;f;168;66
+1149;3523909;1615613;Medicina;Bacharelado;Saúde e bem-estar;f;67;20
+1149;3545209;1382750;Medicina Veterinária;Bacharelado;Agricultura, silvicultura, pesca e veterinária;f;343;577
+1149;3523909;19304;Nutrição;Bacharelado;Saúde e bem-estar;f;244;250
+1149;3523909;1366926;Odontologia;Bacharelado;Saúde e bem-estar;f;133;457
+1149;3545209;1382773;Pedagogia;Licenciatura;Educação;f;221;113
+1149;3523909;35172;Pedagogia;Licenciatura;Educação;f;234;108
+1149;3523909;106952;Processos Gerenciais;Tecnológico;Negócios, administração e direito;f;133;69
+1149;3523909;123171;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;396;741
+1149;3545209;1467797;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;224;215
+1149;3545209;35818;Publicidade E Propaganda;Bacharelado;Negócios, administração e direito;f;115;107
+1149;3523909;1454710;Radiologia;Tecnológico;Saúde e bem-estar;f;108;60
+1149;3523909;97796;Serviço Social;Bacharelado;Saúde e bem-estar;f;0;0
+1219;3522307;55139;Administração;Bacharelado;Negócios, administração e direito;f;600;39
+1219;3522307;1331339;Arquitetura E Urbanismo;Bacharelado;Engenharia, produção e construção;f;101;17
+1219;3522307;56998;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;150;2
+1219;3522307;57684;Direito;Bacharelado;Negócios, administração e direito;f;106;178
+1219;3522307;1161249;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;103;36
+1219;3522307;1161337;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;f;100;0
+1219;3522307;1280690;Estética E Cosmética;Tecnológico;Serviços;f;100;0
+1219;3522307;1280697;Farmácia;Bacharelado;Saúde e bem-estar;f;64;78
+1219;3522307;1280691;Fisioterapia;Bacharelado;Saúde e bem-estar;f;102;68
+1219;3522307;1441146;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;115;219
+1317;3522307;1146518;Administração;Bacharelado;Negócios, administração e direito;f;100;15
+1317;3522307;1138791;Biomedicina;Bacharelado;Saúde e bem-estar;f;100;70
+1317;3522307;1467827;Direito;Bacharelado;Negócios, administração e direito;f;100;27
+1317;3522307;1279638;Enfermagem;Bacharelado;Saúde e bem-estar;f;80;100
+1317;3522307;1138794;Farmácia;Bacharelado;Saúde e bem-estar;f;45;30
+1317;3522307;1138793;Fisioterapia;Bacharelado;Saúde e bem-estar;f;60;69
+1317;3522307;1593037;Medicina Veterinária;Bacharelado;Agricultura, silvicultura, pesca e veterinária;f;50;59
+1317;3522307;1585542;Nutrição;Bacharelado;Saúde e bem-estar;f;60;5
+1317;3522307;1280348;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;60;134
+1545;3507001;54846;Direito;Bacharelado;Negócios, administração e direito;f;875;60
+1561;3552205;41667;Administração;Bacharelado;Negócios, administração e direito;f;162;120
+1561;3552205;99954;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;111;198
+1561;3552205;1332644;Arquitetura E Urbanismo;Bacharelado;Engenharia, produção e construção;f;100;90
+1561;3552205;117940;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;101;42
+1561;3552205;116290;Ciências Econômicas;Bacharelado;Ciências sociais, comunicação e informação;f;101;26
+1561;3552205;117943;Comunicação Social - Jornalismo;Bacharelado;Ciências sociais, comunicação e informação;f;100;31
+1561;3552205;38302;Comunicação Social - Publicidade E Propaganda;Bacharelado;Negócios, administração e direito;f;122;116
+1561;3552205;1130263;Comércio Exterior;Tecnológico;Negócios, administração e direito;f;100;27
+1561;3552205;101909;Design;Bacharelado;Artes e humanidades;f;100;15
+1561;3552205;1546946;Design De Moda;Tecnológico;Artes e humanidades;f;60;9
+1561;3552205;95983;Direito;Bacharelado;Negócios, administração e direito;f;180;329
+1561;3552205;1107903;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;100;11
+1561;3552205;1107907;Engenharia Da Computação;Bacharelado;Engenharia, produção e construção;f;100;32
+1561;3552205;1107909;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;f;101;40
+1561;3552205;1107950;Engenharia Mecânica;Bacharelado;Engenharia, produção e construção;f;101;26
+1561;3552205;1330885;Fotografia;Tecnológico;Artes e humanidades;f;40;12
+1561;3552205;99970;Gestão Comercial;Tecnológico;Negócios, administração e direito;f;61;24
+1561;3552205;1130265;Gestão Da Qualidade;Tecnológico;Negócios, administração e direito;f;100;7
+1561;3552205;99964;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;f;60;44
+1561;3552205;99976;Gestão Financeira;Tecnológico;Negócios, administração e direito;f;60;33
+1561;3552205;99958;Logística;Tecnológico;Negócios, administração e direito;f;60;18
+1561;3552205;99960;Marketing;Tecnológico;Negócios, administração e direito;f;61;67
+1561;3552205;99972;Processos Gerenciais;Tecnológico;Negócios, administração e direito;f;60;23
+1561;3552205;1330884;Produção Audiovisual;Tecnológico;Artes e humanidades;f;41;42
+1561;3552205;1330883;Produção Fonográfica;Tecnológico;Artes e humanidades;f;40;4
+1561;3552205;96116;Relações Internacionais;Bacharelado;Ciências sociais, comunicação e informação;f;161;26
+1810;3550605;1261051;Administração;Bacharelado;Negócios, administração e direito;t;41;165
+1810;3507001;1214442;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;44;111
+1810;3545209;1675816;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;40;39
+1810;3545209;1457004;Ciência Da Computação;Bacharelado;Computação e Tecnologias da Informação e Comunicação (TIC);t;51;166
+1810;3550605;1116852;Ciências Biológicas;Licenciatura;Educação;t;41;171
+1810;3545209;1457003;Engenharia De Controle E Automação;Bacharelado;Engenharia, produção e construção;t;43;136
+1810;3507001;1550846;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;t;52;108
+1810;3522307;1366665;Engenharia Mecânica;Bacharelado;Engenharia, produção e construção;t;51;156
+1810;3522307;1116850;Física;Licenciatura;Educação;t;40;57
+1810;3550605;1168209;Gestão Ambiental;Tecnológico;Engenharia, produção e construção;t;42;63
+1810;3507001;1366649;Gestão De Produção Industrial;Tecnológico;Negócios, administração e direito;t;0;1
+1810;3552205;1421322;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;t;43;82
+1810;3545209;1457024;Letras;Licenciatura;Educação;t;43;90
+1810;3522307;1341347;Matemática;Licenciatura;Educação;t;44;85
+1810;3545209;1457027;Matemática;Licenciatura;Educação;t;42;62
+1810;3552205;1515690;Pedagogia;Licenciatura;Educação;t;48;131
+1810;3507001;1375237;Pedagogia;Licenciatura;Educação;t;41;94
+1810;3522307;1183398;Programa Especial De Formação De Docentes Para A Educação Básica;Licenciatura;Educação;t;40;19
+1810;3550605;1188336;Viticultura E Enologia;Tecnológico;Agricultura, silvicultura, pesca e veterinária;t;42;87
+3940;3554003;96945;Administração;Bacharelado;Negócios, administração e direito;f;70;36
+3940;3554003;96947;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;60;32
+3940;3554003;1143406;Direito;Bacharelado;Negócios, administração e direito;f;152;126
+3940;3554003;1330601;Enfermagem;Bacharelado;Saúde e bem-estar;f;86;81
+3940;3554003;110560;Engenharia Agronômica;Bacharelado;Agricultura, silvicultura, pesca e veterinária;f;100;109
+3940;3554003;1453933;Medicina Veterinária;Bacharelado;Agricultura, silvicultura, pesca e veterinária;f;100;84
+3940;3554003;1389642;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;67;122
+4655;3552205;104848;Administração;Bacharelado;Negócios, administração e direito;f;173;242
+4655;3552205;112134;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;137;156
+4655;3552205;1364410;Arquitetura E Urbanismo;Bacharelado;Engenharia, produção e construção;f;0;12
+4655;3552205;1364415;Biomedicina;Bacharelado;Saúde e bem-estar;f;141;203
+4655;3552205;1385355;Direito;Bacharelado;Negócios, administração e direito;f;414;533
+4655;3552205;49793;Educação Física;Licenciatura;Educação;f;0;0
+4655;3552205;1075492;Educação Física;Bacharelado;Saúde e bem-estar;f;66;62
+4655;3552205;107614;Enfermagem;Bacharelado;Saúde e bem-estar;f;286;378
+4655;3552205;1205750;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;129;121
+4655;3552205;1118154;Engenharia Da Computação;Bacharelado;Engenharia, produção e construção;f;0;8
+4655;3552205;104856;Engenharia De Controle E Automação;Bacharelado;Engenharia, produção e construção;f;0;10
+4655;3552205;104844;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;f;56;82
+4655;3552205;105912;Engenharia Elétrica;Bacharelado;Engenharia, produção e construção;f;61;86
+4655;3552205;1321934;Engenharia Mecânica;Bacharelado;Engenharia, produção e construção;f;65;64
+4655;3552205;1322120;Farmácia;Bacharelado;Saúde e bem-estar;f;109;164
+4655;3552205;104846;Fisioterapia;Bacharelado;Saúde e bem-estar;f;161;172
+4655;3552205;1364412;Gastronomia;Tecnológico;Serviços;f;46;18
+4655;3552205;111966;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;f;51;42
+4655;3552205;1117246;Logística;Tecnológico;Negócios, administração e direito;f;90;34
+4655;3552205;1364414;Medicina Veterinária;Bacharelado;Agricultura, silvicultura, pesca e veterinária;f;251;535
+4655;3552205;1330657;Nutrição;Bacharelado;Saúde e bem-estar;f;57;78
+4655;3552205;1364413;Odontologia;Bacharelado;Saúde e bem-estar;f;184;375
+4655;3552205;105955;Pedagogia;Licenciatura;Educação;f;0;3
+4655;3552205;1283951;Psicologia;Bacharelado;Ciências sociais, comunicação e informação;f;525;623
+13796;3540606;1073877;Administração;Bacharelado;Negócios, administração e direito;f;125;24
+13796;3540606;1073542;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;64;29
+13796;3540606;1073879;Pedagogia;Licenciatura;Educação;f;125;19
+14401;3540606;1178602;Ciências Contábeis;Bacharelado;Negócios, administração e direito;f;111;15
+14401;3540606;1205123;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;51;23
+14401;3540606;1175384;Engenharia De Produção;Bacharelado;Engenharia, produção e construção;f;66;25
+14401;3540606;1100533;Gestão De Recursos Humanos;Tecnológico;Negócios, administração e direito;f;0;0
+14401;3540606;1100534;Logística;Tecnológico;Negócios, administração e direito;f;100;1
+14401;3540606;1322380;Processos Gerenciais;Tecnológico;Negócios, administração e direito;f;66;11
+15693;3522307;1149894;Agronegócio;Tecnológico;Negócios, administração e direito;t;153;174
+15693;3522307;1149897;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;241;411
+15693;3522307;1149898;Comércio Exterior;Tecnológico;Negócios, administração e direito;t;459;279
+15693;3522307;1389827;Gestão Ambiental;Tecnológico;Engenharia, produção e construção;t;331;66
+15693;3522307;1297033;Gestão Da Produção Industrial;Tecnológico;Negócios, administração e direito;t;136;161
+15695;3523909;1152201;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;83;197
+15695;3523909;1664156;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;17;31
+15695;3523909;1287260;Eventos;Tecnológico;Serviços;t;80;76
+15695;3523909;1150397;Gestão Da Tecnologia Da Informação;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;102;251
+15695;3523909;1526170;Gestão Empresarial;Tecnológico;Negócios, administração e direito;t;84;156
+15695;3523909;1178849;Mecatrônica Industrial;Tecnológico;Engenharia, produção e construção;t;80;90
+15695;3523909;1664155;Processos Gerenciais;Tecnológico;Negócios, administração e direito;t;19;24
+15803;3554003;1666344;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;30;36
+15803;3554003;1151058;Automação Industrial;Tecnológico;Engenharia, produção e construção;t;168;232
+15803;3554003;1156898;Gestão Da Tecnologia Da Informação;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;172;411
+15803;3554003;1156807;Manutenção Industrial;Tecnológico;Engenharia, produção e construção;t;162;242
+15803;3554003;1156897;Processos Gerenciais;Tecnológico;Negócios, administração e direito;t;171;434
+15803;3554003;1666346;Processos Gerenciais;Tecnológico;Negócios, administração e direito;t;30;52
+15803;3554003;1151059;Produção Fonográfica;Tecnológico;Artes e humanidades;t;82;225
+17598;3552205;1184525;Pedagogia;Licenciatura;Educação;f;50;19
+17691;3552205;50017063;Análise E Desenvolvimento De Sistemas;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);f;40;73
+17691;3552205;5001104;Fabricação Mecânica;Tecnológico;Engenharia, produção e construção;f;0;1
+17691;3552205;5001581;Mecatrônica Industrial;Tecnológico;Engenharia, produção e construção;f;40;75
+18817;3550605;1330005;Gestão Comercial;Tecnológico;Negócios, administração e direito;t;63;135
+18817;3550605;1636744;Gestão De Empreendimentos Gastronômicos;Tecnológico;Serviços;t;63;50
+18817;3550605;1313160;Gestão De Turismo;Tecnológico;Serviços;t;66;82
+18817;3550605;5001196;Sistemas Para Internet;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;63;148
+21344;3557006;1334585;Pedagogia;Licenciatura;Educação;f;50;0
+23893;3522307;1466858;Administração;Bacharelado;Negócios, administração e direito;f;27;12
+23893;3522307;1466859;Direito;Bacharelado;Negócios, administração e direito;f;104;63
+23893;3522307;1466860;Engenharia Civil;Bacharelado;Engenharia, produção e construção;f;40;9
+28988;3557006;1666585;Ciência De Dados Para Negócios;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;73;53
+28988;3557006;1644137;Controle De Obras;Tecnológico;Engenharia, produção e construção;t;76;71
+28988;3557006;1666584;Desenvolvimento De Software Multiplataforma;Tecnológico;Computação e Tecnologias da Informação e Comunicação (TIC);t;80;125

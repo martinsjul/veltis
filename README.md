@@ -105,6 +105,7 @@ O projeto começou no 1º semestre de 2026 com a estrutura de pastas e o README 
 
 ### 2026-11-10
 
+- **Backend Java/Spring Boot (branch `backend-java`)** Julia: projeto em `backend-java/` para a disciplina Técnicas Avançadas de Programação — Spring Data JPA, H2 com dados reais da RMS, CRUD, DTOs/Mappers, Bean Validation e relacionamentos JPA (Município 1:N Escola, Escola 1:1 Localização, Escola N:N Curso técnico, Instituição 1:N Campus e Curso). Ver `backend-java/README.md`.
 - **Requisitos resumidos** Julia: a pedido do orientador, os requisitos funcionais de consulta foram agrupados (de 14 para 8, especificação 0.4) e os casos de uso de 12 para 8 (versão 1.2); README, backlog e plano de testes atualizados com a nova numeração.
 - **Otimização do Front e Pins das Instituições de Superior** Daniel: mapa consegue exibir todas as instituições, informações das instituições carregam mais rápido, e os filtros funcionam corretamente por rede, cidade e/ou nome.
 
