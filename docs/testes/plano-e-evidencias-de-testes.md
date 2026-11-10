@@ -44,8 +44,8 @@ VELTIS_TESTE_API=1 pytest tests/test_api.py         # API contra o banco do .env
 | CT-11 | RNF-07 | Filtro com valor inválido na API (`dependencia=particular`, `municipio=abc`, `por_pagina=1000`) | HTTP 422, sem consultar o banco | `test_api.py` |
 | CT-12 | RNF-07 | Banco fora do ar | HTTP 503 com mensagem simples, sem expor senha ou detalhe técnico | `test_api.py` |
 | CT-13 | RNF-07 | Tentativa de escrita pela conexão da API | Recusada (transação somente leitura) | `test_api.py` |
-| CT-14 | RF-07 | `/mapa/instituicoes` | Todos os itens com latitude e longitude; tipos Escola, ETEC, FATEC e Faculdade/Universidade | `test_api.py` |
-| CT-15 | RF-06 | Termo de busca "  São ROQUE " | Vira o padrão `%sao roque%` (ignora acentos e maiúsculas; curingas escapados) | `test_api.py` |
+| CT-14 | RF-04 | `/mapa/instituicoes` | Todos os itens com latitude e longitude; tipos Escola, ETEC, FATEC e Faculdade/Universidade | `test_api.py` |
+| CT-15 | RF-03 | Termo de busca "  São ROQUE " | Vira o padrão `%sao roque%` (ignora acentos e maiúsculas; curingas escapados) | `test_api.py` |
 
 ## 4. Resultados observados
 

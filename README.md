@@ -84,11 +84,11 @@ Os pipelines de dados ficam dentro de `backend/src/`, e não numa pasta `data/` 
 
 | Necessidade/objetivo | Requisito | Caso de uso | Implementação | Validação | Estado |
 | --- | --- | --- | --- | --- | --- |
-| Ver as instituições no mapa | RF-02, RF-07 | UC-01, UC-04, UC-07 | `/municipios`, `/mapa/instituicoes`; views `vw_escolas_mapa`, `vw_faculdades_mapa` | CT-14 | API concluída; interface em andamento |
-| Encontrar uma instituição | RF-03 a RF-06 | UC-02, UC-10 | filtros `municipio`, `tipo`, `dependencia`, `rede`, `busca` | CT-11, CT-15 | API concluída |
-| Saber o que cada instituição oferece | RF-08, RF-09 | UC-05, UC-06, UC-08, UC-09 | `/escolas/{codigo}`, `/cursos-tecnicos`, `/cursos-superiores` | testes da API | API concluída; interface a validar |
-| Comparar municípios | RF-10 | UC-03 | `/municipios/{codigo}`, `vw_indicadores_municipio` | testes da API | API concluída; interface planejada |
-| Confiar nos dados | RF-13, RF-14, RNF-06, RNF-08 | UC-12 | pipelines, `controle_ingestao`, `/fontes` | verificação do banco | concluído |
+| Ver as instituições no mapa | RF-01, RF-04 | UC-01, UC-04 | `/municipios`, `/mapa/instituicoes`; views `vw_escolas_mapa`, `vw_faculdades_mapa` | CT-14 | API concluída; interface em andamento |
+| Encontrar uma instituição | RF-02, RF-03 | UC-02, UC-07 | filtros `municipio`, `tipo`, `dependencia`, `rede`, `busca` | CT-11, CT-15 | API concluída |
+| Saber o que cada instituição oferece | RF-05 | UC-05, UC-06 | `/escolas/{codigo}`, `/cursos-tecnicos`, `/cursos-superiores` | testes da API | API concluída; interface a validar |
+| Comparar municípios | RF-06 | UC-03 | `/municipios/{codigo}`, `vw_indicadores_municipio` | testes da API | API concluída; interface planejada |
+| Confiar nos dados | RF-07, RF-08, RNF-06, RNF-08 | UC-08 | pipelines, `controle_ingestao`, `/fontes` | verificação do banco | concluído |
 
 ## Continuidade entre semestres
 
@@ -105,6 +105,7 @@ O projeto começou no 1º semestre de 2026 com a estrutura de pastas e o README 
 
 ### 2026-11-10
 
+- **Requisitos resumidos** Julia: a pedido do orientador, os requisitos funcionais de consulta foram agrupados (de 14 para 8, especificação 0.4) e os casos de uso de 12 para 8 (versão 1.2); README, backlog e plano de testes atualizados com a nova numeração.
 - **Otimização do Front e Pins das Instituições de Superior** Daniel: mapa consegue exibir todas as instituições, informações das instituições carregam mais rápido, e os filtros funcionam corretamente por rede, cidade e/ou nome.
 
 ### 2026-11-06
