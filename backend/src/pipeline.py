@@ -4,7 +4,9 @@
     2. sidra          IBGE SIDRA                  -> ibge_demografico
     3. censo_escolar  INEP Censo Escolar          -> inep_escola, inep_curso_tecnico
     4. localizacao    Catálogo INEP + SEDUC-SP    -> escola_localizacao
-    5. censo_superior INEP Censo Superior         -> mec_ies, mec_cursos
+    5. geocodificacao IBGE CNEFE (geocodebr)      -> escola_localizacao (escolas sem ponto)
+    6. censo_superior INEP Censo Superior         -> mec_ies, mec_cursos
+    7. locais_ies     Locais dos campi (CSV)      -> ies_local_oferta
 
 Uso (dentro de backend/, com o ambiente virtual ativado):
     python -m src.pipeline                      # tudo
@@ -24,7 +26,9 @@ import traceback
 from src.collectors import (
     censo_escolar,
     censo_superior,
+    geocodificacao,
     ibge_malha,
+    locais_ies,
     localizacao_escolas,
     sidra,
 )
@@ -36,7 +40,9 @@ ETAPAS = [
     ("sidra", sidra.executar_pipeline),
     ("censo_escolar", censo_escolar.executar_pipeline),
     ("localizacao", localizacao_escolas.executar_pipeline),
+    ("geocodificacao", geocodificacao.executar_pipeline),
     ("censo_superior", censo_superior.executar_pipeline),
+    ("locais_ies", locais_ies.executar_pipeline),
 ]
 
 

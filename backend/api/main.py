@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import DBAPIError
 
 from api.config import origens_cors
-from api.rotas import cursos, escolas, gerais, municipios
+from api.rotas import cursos, escolas, gerais, mapa, municipios
 
 
 log = logging.getLogger("veltis.api")
@@ -27,12 +27,14 @@ municípios e indicadores do IBGE, escolas do Censo Escolar, cursos técnicos e
 cursos superiores do INEP.
 
 - A API **só lê** o banco (as views `vw_*`); não grava nada.
-- Endereços de mapa devolvem **GeoJSON** em WGS 84 (EPSG:4326), pronto para o Leaflet.
+- **`/mapa/instituicoes`** devolve escolas e faculdades com `latitude` e `longitude`.
+- `/municipios` e `/escolas` devolvem **GeoJSON** em WGS 84 (EPSG:4326).
 - Listas longas são paginadas: `?pagina=1&por_pagina=50`.
 - Sem `ano`, cada endereço usa a edição mais recente carregada.
 """
 
 TAGS = [
+    {"name": "Mapa", "description": "Escolas e faculdades com latitude e longitude, prontas para os pinos."},
     {"name": "Municípios", "description": "Contornos, indicadores do IBGE e ficha de cada cidade."},
     {"name": "Escolas", "description": "Escolas do Censo Escolar (INEP) com a localização."},
     {"name": "Cursos", "description": "Cursos técnicos e de graduação, e as faculdades."},
@@ -82,6 +84,7 @@ def inicio():
     return {"api": "Veltis", "documentacao": "/docs", "saude": "/saude"}
 
 
+app.include_router(mapa.router)
 app.include_router(municipios.router)
 app.include_router(escolas.router)
 app.include_router(cursos.router)

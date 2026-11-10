@@ -52,6 +52,8 @@ def cliente_sem_banco():
         "/cursos-superiores?grau=doutorado",
         "/instituicoes?rede=mista",
         "/escolas/0",
+        "/mapa/instituicoes?tipo=universidade",
+        "/mapa/instituicoes?municipio=123",
     ],
 )
 def test_filtro_invalido_responde_422(cliente_sem_banco, url):
@@ -214,3 +216,16 @@ def test_filtros_e_fontes(cliente):
     assert len(filtros["municipios"]) == 27
     assert {o["valor"] for o in filtros["dependencias"]} == {"federal", "estadual", "municipal", "privada"}
     assert isinstance(cliente.get("/fontes").json(), list)
+
+
+@com_banco
+def test_mapa_entrega_latitude_e_longitude_de_tudo(cliente):
+    itens = cliente.get("/mapa/instituicoes").json()
+    assert itens
+    assert all(i["latitude"] is not None and i["longitude"] is not None for i in itens)
+    assert {"Escola", "Faculdade/Universidade", "FATEC"} <= {i["tipo"] for i in itens}
+
+    fatecs = cliente.get("/mapa/instituicoes?tipo=fatec").json()
+    assert fatecs and all(i["tipo"] == "FATEC" for i in fatecs)
+    assert all(i["cursos"] for i in fatecs)
+

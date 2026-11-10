@@ -2,7 +2,7 @@
 
 Para: Daniel (frontend) · De: Julia (backend) · Outubro de 2026
 
-Este guia explica como a API funciona e como usá-la no React com o Leaflet. Os exemplos de resposta mostram o **formato** dos dados; os números são ilustrativos.
+Este guia explica como a API funciona e como usá-la no React com o MapTiler. Os exemplos de resposta mostram o **formato** dos dados; os números são ilustrativos.
 
 ---
 
@@ -11,13 +11,62 @@ Este guia explica como a API funciona e como usá-la no React com o Leaflet. Os 
 O banco (Supabase) guarda os dados. A **API** lê esses dados e entrega em JSON. O **site** (React) pede os dados para a API e mostra no mapa.
 
 ```text
-Site (React + Leaflet)  →  pede  →  API (FastAPI)  →  lê  →  Banco (Supabase)
+Site (React + MapTiler) →  pede  →  API (FastAPI)  →  lê  →  Banco (Supabase)
                         ←  JSON  ←
 ```
 
 O site **nunca fala direto com o banco**. Ele só chama a API.
 
 A API **só lê**: nenhum endereço grava, altera ou apaga dados.
+
+### O mais importante: os pinos do mapa
+
+Use **`GET /mapa/instituicoes`**. Ele devolve **escolas e faculdades numa lista só**, cada uma com **`latitude` e `longitude`**, nos mesmos campos do `mockData` do site:
+
+```json
+[
+  {
+    "id": "ies-33-19",
+    "origem": "MEC_IES",
+    "tipo": "FATEC",
+    "nome": "Fatec Sorocaba",
+    "sigla": "FATEC SO",
+    "municipio": "Sorocaba",
+    "rede": "Pública",
+    "endereco": "Avenida Engenheiro Carlos Reinaldo Mendes, 2015",
+    "cep": "18013-280",
+    "latitude": -23.480133,
+    "longitude": -47.425939,
+    "precisaoLocalizacao": "edificio",
+    "anoCenso": 2024,
+    "possuiEnsinoMedio": false,
+    "organizacaoAcademica": "Faculdade",
+    "cursos": [{ "codigo": 1, "nome": "Análise e Desenvolvimento de Sistemas", "grau": "Tecnológico", "vagas": 80, "matriculas": 300 }]
+  }
+]
+```
+
+- `tipo`: `Escola`, `ETEC`, `FATEC` ou `Faculdade/Universidade` (as mesmas chaves de `TIPO_COLORS`).
+- Filtros: `?municipio=3552205`, `?tipo=etec&tipo=fatec` (valores: `escola`, `etec`, `fatec`, `faculdade`) e `?busca=texto`.
+- Por padrão só vêm itens **com** coordenada. `?incluir_sem_coordenada=true` traz também as escolas sem ponto (com `latitude: null`).
+- `precisaoLocalizacao` diz de onde veio o ponto:
+  - escolas: `oficial` (INEP/SEDUC) ou, quando calculado pelo endereço (IBGE CNEFE), `numero`, `numero_aproximado` ou `logradouro`;
+  - faculdades: `edificio`, `numero` ou `rua`.
+  - `logradouro` e `rua` = rua certa, mas pode estar a algumas quadras; vale um ícone diferente.
+
+No `src/services/institutionService.js`, troque:
+
+```js
+const response = await fetch(`${API_URL}/instituicoes`)
+```
+
+por:
+
+```js
+const response = await fetch(`${API_URL}/mapa/instituicoes`)
+```
+
+A resposta já é uma lista (`Array.isArray(data)` dá `true`), então o resto do código funciona igual.
 
 ---
 
@@ -63,6 +112,7 @@ Todos são `GET`.
 
 | Endereço | Para que serve no site | Formato |
 | --- | --- | --- |
+| **`/mapa/instituicoes`** | **Pinos do mapa: escolas e faculdades com latitude e longitude** | **Lista** |
 | `/municipios` | Desenhar o contorno das 27 cidades | GeoJSON |
 | `/municipios/indicadores` | Tabela ou mapa colorido por população, alfabetização etc. | Lista |
 | `/municipios/{cd_mun}` | Painel lateral ao clicar numa cidade | Objeto |
@@ -71,7 +121,7 @@ Todos são `GET`.
 | `/escolas/sem-localizacao` | Lista das escolas que não têm ponto no mapa | Página |
 | `/cursos-tecnicos` | Lista e busca de cursos técnicos | Página |
 | `/cursos-superiores` | Lista e busca de cursos de graduação | Página |
-| `/instituicoes` | Faculdades de cada cidade | Página |
+| `/instituicoes` | Faculdades de cada cidade, com contagem de cursos e os campi (`locais`) | Página |
 | `/filtros` | Opções prontas para os campos de seleção | Objeto |
 | `/fontes` | Rodapé "dados atualizados em..." e página de fontes | Lista |
 | `/saude` | Testar se a API está no ar | Objeto |
@@ -87,7 +137,7 @@ Todos são `GET`.
 
 ### 4.1 GeoJSON (para o mapa)
 
-`/municipios` e `/escolas` devolvem **GeoJSON**, o formato que o Leaflet desenha direto. As coordenadas já estão em WGS 84, o padrão do Leaflet; não precisa converter nada.
+`/municipios` e `/escolas` devolvem **GeoJSON**, que o MapTiler (MapLibre) desenha direto com `map.addSource(..., { type: 'geojson', data })`. As coordenadas já estão em WGS 84; não precisa converter nada. Em `/escolas`, cada ponto também traz `latitude` e `longitude` em `properties`.
 
 ```json
 {
@@ -119,7 +169,7 @@ Todos são `GET`.
 }
 ```
 
-- Atenção: no GeoJSON a ordem é **[longitude, latitude]**, ao contrário do Leaflet, que usa `[lat, lng]`. O componente `GeoJSON` do react-leaflet já cuida disso sozinho.
+- Atenção: no GeoJSON e no MapTiler a ordem é **[longitude, latitude]** (ex.: `marker.setLngLat([longitude, latitude])`).
 - Os dados de cada escola ficam em `feature.properties`.
 - `metadados` só existe em `/escolas`. Use para mostrar algo como "80 escolas no mapa, 11 sem localização".
 
@@ -231,54 +281,31 @@ export async function buscar(caminho, filtros = {}) {
 }
 ```
 
-### 6.2 Mapa com as cidades e as escolas
+### 6.2 Mapa (MapTiler) com o contorno das cidades e os pinos
 
-```jsx
-import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON, CircleMarker, Popup } from "react-leaflet";
-import { buscar } from "./api";
+O site já desenha os pinos a partir de `latitude`/`longitude` (componente `MapView`). Com `/mapa/instituicoes` (seção 1) isso passa a funcionar com dados reais. Para desenhar também o **contorno das cidades**, adicione uma camada GeoJSON depois que o mapa carregar:
 
-export default function Mapa({ filtros, aoClicarCidade, aoClicarEscola }) {
-  const [cidades, setCidades] = useState(null);
-  const [escolas, setEscolas] = useState(null);
-
-  useEffect(() => { buscar("/municipios").then(setCidades); }, []);
-  useEffect(() => { buscar("/escolas", filtros).then(setEscolas); }, [filtros]);
-
-  return (
-    <MapContainer center={[-23.5, -47.45]} zoom={9} style={{ height: "100vh" }}>
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution="&copy; OpenStreetMap"
-      />
-
-      {cidades && (
-        <GeoJSON
-          data={cidades}
-          style={{ weight: 1, fillOpacity: 0.05 }}
-          onEachFeature={(f, camada) =>
-            camada.on("click", () => aoClicarCidade(f.properties.cd_mun))
-          }
-        />
-      )}
-
-      {escolas?.features.map((f) => (
-        <CircleMarker
-          key={f.id}
-          center={[f.geometry.coordinates[1], f.geometry.coordinates[0]]}
-          radius={4}
-          eventHandlers={{ click: () => aoClicarEscola(f.id) }}
-        >
-          <Popup>{f.properties.no_entidade}</Popup>
-        </CircleMarker>
-      ))}
-    </MapContainer>
-  );
-}
+```js
+map.on("load", async () => {
+  const cidades = await buscar("/municipios");
+  map.addSource("municipios", { type: "geojson", data: cidades });
+  map.addLayer({
+    id: "municipios-contorno",
+    type: "line",
+    source: "municipios",
+    paint: { "line-color": "#315B62", "line-width": 1 },
+  });
+  map.addLayer({
+    id: "municipios-area",
+    type: "fill",
+    source: "municipios",
+    paint: { "fill-color": "#315B62", "fill-opacity": 0.04 },
+  });
+  map.on("click", "municipios-area", (e) => aoClicarCidade(e.features[0].properties.cd_mun));
+});
 ```
 
-- **Importante:** o `GeoJSON` do react-leaflet **não redesenha** quando o `data` muda. Se for trocar os dados de uma camada `GeoJSON`, mude também a `key` dela (ex.: `key={JSON.stringify(filtros)}`). No exemplo acima as escolas usam `CircleMarker`, que não tem esse problema.
-- Com todas as escolas (~1.600 pontos), se o mapa ficar lento, use agrupamento de marcadores (marker cluster) ou desenhe os pontos com `preferCanvas` no `MapContainer`.
+- Com ~1.500 pinos, os marcadores HTML (`new Marker`) podem deixar o mapa lento. Se acontecer, troque por uma camada `circle` de uma fonte GeoJSON com `cluster: true`.
 
 ### 6.3 Painel ao clicar
 
@@ -315,14 +342,15 @@ A mensagem de erro sempre vem em `detail`.
 
 ## 8. Cuidados com os dados
 
-- **Escolas sem ponto:** cerca de 13% das escolas não têm coordenada oficial e não aparecem em `/escolas`. Mostre-as numa lista à parte, usando `/escolas/sem-localizacao`, para o usuário não pensar que faltam escolas.
+- **Escolas sem ponto:** cerca de 13% das escolas não têm coordenada oficial e não aparecem em `/escolas` nem em `/mapa/instituicoes`. Mostre-as numa lista à parte, usando `/escolas/sem-localizacao`, para o usuário não pensar que faltam escolas.
+- **Faculdades:** o INEP não publica coordenadas das faculdades. Os pontos dos campi foram levantados à mão (endereço oficial + OpenStreetMap) e estão em `backend/data/referencia/ies_locais_oferta.csv`. Achou um ponto errado? Corrija o CSV e rode `python -m src.pipeline --apenas locais_ies`.
 - **Ponto fora da cidade:** `ponto_confere_municipio = false` quer dizer que a coordenada oficial cai fora do contorno da cidade (são poucas). Vale mostrar um ícone de aviso.
 - **Presencial × EAD:** um curso EAD aparece em **toda cidade onde tem aluno**. Para "faculdades que funcionam na cidade", use `modalidade=presencial`.
 - **Vagas:** `qt_vagas` só existe no presencial; no EAD vem `null`.
 - **Taxas não se somam:** campos terminados em `_pct` (porcentagens) não podem ser somados entre cidades.
 - **Ano:** sem o filtro `ano`, a API usa a edição mais recente (Censo Escolar 2025, Censo Superior 2024).
 - **Valores vazios:** campo `null` quer dizer "não informado pela fonte". Mostre "—", nunca 0.
-- **Fontes:** o site precisa citar IBGE e INEP. `/fontes` traz a lista pronta.
+- **Fontes:** o site precisa citar IBGE (incluindo "CNEFE – Censo 2022" e "geocodebr/Ipea" para os pontos calculados), INEP, SEDUC-SP e "© OpenStreetMap contributors" (coordenadas das faculdades). `/fontes` traz a lista pronta.
 
 ---
 
@@ -330,8 +358,8 @@ A mensagem de erro sempre vem em `detail`.
 
 1. **Ligar a API e explorar o `/docs`**, para conhecer as respostas.
 2. **Criar o `src/api.js`** (seção 6.1).
-3. **Mapa base:** OpenStreetMap + contorno das 27 cidades (`/municipios`).
-4. **Escolas no mapa** (`/escolas`), com a contagem de `metadados`.
+3. **Pinos reais:** trocar o `mockData` por `/mapa/instituicoes` (seção 1) e desenhar o contorno das 27 cidades (`/municipios`).
+4. **Filtro por tipo** (Escola, ETEC, FATEC, Faculdade) e por cidade, usando os filtros de `/mapa/instituicoes`.
 5. **Filtros:** cidade, rede, ensino médio, educação profissional e busca por nome, montados a partir de `/filtros`.
 6. **Painel da cidade** ao clicar no contorno (`/municipios/{cd_mun}`): população, sexo, faixas de idade e resumo da educação.
 7. **Painel da escola** ao clicar no ponto (`/escolas/{co_entidade}`): endereço, telefone e cursos técnicos.

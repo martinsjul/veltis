@@ -102,6 +102,10 @@ class EscolaDetalhe(BaseModel):
     ponto_confere_municipio: bool | None
     latitude: float | None
     longitude: float | None
+    ds_precisao_localizacao: str | None = Field(
+        description="oficial; ou numero, numero_aproximado, logradouro (geocodificado)."
+    )
+    vl_desvio_metros: int | None = Field(description="Margem de erro do ponto geocodificado.")
     cursos_tecnicos: list[CursoTecnicoDaEscola]
 
 
@@ -156,6 +160,14 @@ class CursoSuperior(BaseModel):
     com_matricula: bool | None
 
 
+class LocalDaInstituicao(BaseModel):
+    no_local: str
+    ds_endereco: str | None
+    latitude: float
+    longitude: float
+    ds_precisao_localizacao: str
+
+
 class InstituicaoNoMunicipio(BaseModel):
     co_ies: int
     no_ies: str
@@ -168,6 +180,56 @@ class InstituicaoNoMunicipio(BaseModel):
     qt_cursos_presenciais: int
     qt_cursos_ead: int
     qt_matriculas: int
+    locais: list[LocalDaInstituicao] = Field(
+        description="Campi com coordenada no município (vazio se a faculdade só tem EAD ali)."
+    )
+
+
+# ---------------------------------------------------------------------- mapa
+
+class CursoNoMapa(BaseModel):
+    codigo: int
+    nome: str | None
+    grau: str | None = Field(None, description="Só nos cursos superiores.")
+    area: str | None = None
+    gratuito: bool | None = Field(None, description="Só nos cursos superiores.")
+    vagas: int | None = Field(None, description="Só nos cursos superiores presenciais.")
+    matriculas: int | None = None
+
+
+class InstituicaoNoMapa(BaseModel):
+    """Escola ou faculdade, no formato que o frontend usa no mapa."""
+
+    id: str = Field(description="'escola-<código INEP>' ou 'ies-<co_ies>-<id do local>'.")
+    origem: str = Field(description="INEP_ESCOLA ou MEC_IES.")
+    tipo: str = Field(description="Escola, ETEC, FATEC ou Faculdade/Universidade.")
+    nome: str
+    sigla: str | None
+    nomeInstituicao: str | None = Field(description="Nome oficial da faculdade (MEC_IES).")
+    codigoInep: int | None = Field(description="Código INEP da escola.")
+    codigoIes: int | None = Field(description="Código da faculdade no INEP.")
+    municipio: str | None
+    codigoMunicipio: str
+    uf: str
+    rede: str | None
+    categoriaAdministrativa: str | None
+    endereco: str | None
+    bairro: str | None
+    cep: str | None
+    telefone: str | None
+    latitude: float | None
+    longitude: float | None
+    precisaoLocalizacao: str | None = Field(
+        description=(
+            "Escolas: oficial (INEP/SEDUC) ou, se geocodificada pelo endereço, "
+            "numero, numero_aproximado ou logradouro. Faculdades: edificio, numero ou rua."
+        )
+    )
+    anoCenso: int
+    situacaoFuncionamento: str | None
+    possuiEnsinoMedio: bool | None
+    organizacaoAcademica: str | None
+    cursos: list[CursoNoMapa]
 
 
 # ------------------------------------------------------------ filtros/fontes

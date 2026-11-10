@@ -127,7 +127,10 @@ def aplicar_pendentes() -> None:
         # Uma transação por arquivo: se falhar, o arquivo inteiro é desfeito.
         try:
             with get_engine().begin() as conexao:
-                conexao.exec_driver_sql(caminho.read_text(encoding="utf-8"))
+                # O driver trata "%" como marcador de parâmetro; "%%" vira "%"
+                # (necessário para LIKE '%texto%' dentro das migrations).
+                sql = caminho.read_text(encoding="utf-8").replace("%", "%%")
+                conexao.exec_driver_sql(sql)
                 registrar(conexao, caminho, "EXECUTADA")
         except DBAPIError as erro:
             mensagem = str(getattr(erro, "orig", erro)).strip()
