@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, PanelRightOpen } from 'lucide-react'
 import FilterSidebar from './components/FilterSidebar'
 import InstitutionPanel from './components/InstitutionPanel'
@@ -18,6 +18,7 @@ const INITIAL_FILTERS = {
 
 export default function App() {
   const [institutions, setInstitutions] = useState([])
+  const [institutionsKey, setInstitutionsKey] = useState('')
   const [municipalityOptions, setMunicipalityOptions] = useState([])
   const [municipalitiesGeoJson, setMunicipalitiesGeoJson] = useState(null)
   const [selectedInstitution, setSelectedInstitution] = useState(null)
@@ -36,7 +37,6 @@ export default function App() {
         setLoading(true)
         const catalog = await getCatalogData()
         if (active) {
-          setInstitutions(catalog.institutions || [])
           setMunicipalityOptions(catalog.municipalities || [])
           setMunicipalitiesGeoJson(catalog.municipalitiesGeoJson || null)
         }
@@ -83,6 +83,7 @@ export default function App() {
   useEffect(() => {
     if (!scope) {
       setInstitutions([])
+      setInstitutionsKey('')
       setLoadingInstitutions(false)
       setInstitutionsError('')
       return undefined
@@ -93,7 +94,9 @@ export default function App() {
     setInstitutionsError('')
     getMapInstitutions({ ...scope, signal: controller.signal })
       .then((items) => {
-        if (!controller.signal.aborted) setInstitutions(items)
+        if (controller.signal.aborted) return
+        setInstitutions(items)
+        setInstitutionsKey(scopeKey)
       })
       .catch((err) => {
         if (controller.signal.aborted || err.name === 'AbortError') return
@@ -110,19 +113,19 @@ export default function App() {
 
   const filteredInstitutions = useMemo(() => {
     return institutions.filter((institution) => {
-      const queryMatches = matchesQuery(institution, filters.query)
+      const queryMatches = matchesQuery(institution, debouncedQuery)
       const municipioMatches = !filters.municipio || normalizarTexto(institution.municipio || '') === normalizarTexto(filters.municipio)
       const nivelMatches = !filters.niveis.length || filters.niveis.includes(institution.categoria)
       const redeMatches = !filters.redes.length || filters.redes.includes(institution.rede)
 
       return queryMatches && municipioMatches && nivelMatches && redeMatches
     })
-  }, [institutions, filters])
+  }, [institutions, filters.municipio, filters.niveis, filters.redes, debouncedQuery])
 
-  function updateFilters(patch) {
+  const updateFilters = useCallback((patch) => {
     setFilters((current) => ({ ...current, ...patch }))
     setSelectedInstitution(null)
-  }
+  }, [])
 
   function resetFilters() {
     setFilters(INITIAL_FILTERS)
@@ -145,6 +148,7 @@ export default function App() {
       <main className="map-area">
         <MapView
           institutions={filteredInstitutions}
+          fitKey={institutionsKey}
           municipalitiesGeoJson={municipalitiesGeoJson}
           selectedMunicipality={filters.municipio}
           selectedInstitution={selectedInstitution}

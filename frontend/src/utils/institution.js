@@ -17,18 +17,30 @@ export function normalizarTexto(value = '') {
     .trim()
 }
 
+// O texto pesquisável de cada instituição é normalizado uma única vez (e não a cada tecla digitada).
+const searchTextCache = new WeakMap()
+
+function searchableText(instituicao) {
+  let text = searchTextCache.get(instituicao)
+  if (text === undefined) {
+    text = normalizarTexto(
+      [
+        instituicao.nome,
+        instituicao.sigla,
+        instituicao.nomeInstituicao,
+        instituicao.municipio,
+        instituicao.tipo,
+        instituicao.rede,
+      ]
+        .filter(Boolean)
+        .join(' '),
+    )
+    searchTextCache.set(instituicao, text)
+  }
+  return text
+}
+
 export function matchesQuery(instituicao, query) {
   if (!query.trim()) return true
-
-  const q = normalizarTexto(query)
-  return [
-    instituicao.nome,
-    instituicao.sigla,
-    instituicao.nomeInstituicao,
-    instituicao.municipio,
-    instituicao.tipo,
-    instituicao.rede,
-  ]
-    .filter(Boolean)
-    .some((value) => normalizarTexto(value).includes(q))
+  return searchableText(instituicao).includes(normalizarTexto(query))
 }
