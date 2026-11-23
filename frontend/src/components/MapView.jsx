@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { Map, Marker, config, MapStyle } from '@maptiler/sdk'
+import { memo, useEffect, useRef, useState } from 'react'
+import { Map, Popup, config, MapStyle } from '@maptiler/sdk'
 import '@maptiler/sdk/dist/maptiler-sdk.css'
 import { getMarkerColor } from '../utils/institution'
 
@@ -15,6 +15,16 @@ const RMS_SOURCE_ID = 'veltis-rms-dataset'
 const RMS_FILL_ID = 'veltis-rms-dataset-fill'
 const RMS_LINE_ID = 'veltis-rms-dataset-outline'
 
+// Instituições: uma única fonte GeoJSON desenhada pela GPU (em vez de um elemento HTML por pino).
+const INST_SOURCE_ID = 'veltis-instituicoes'
+const INST_CLUSTER_LAYER_ID = 'veltis-instituicoes-grupos'
+const INST_COUNT_LAYER_ID = 'veltis-instituicoes-contagem'
+const INST_POINT_LAYER_ID = 'veltis-instituicoes-pontos'
+const PICKED_SOURCE_ID = 'veltis-instituicao-selecionada'
+const PICKED_LAYER_ID = 'veltis-instituicao-selecionada-anel'
+const CLUSTER_MAX_ZOOM = 13 // acima disso os pontos aparecem individualmente
+const FOCUS_ZOOM = 15
+
 const MUNICIPALITY_NAME_KEYS = ['NM_MUN', 'nm_mun', 'NO_MUNICIPIO', 'no_municipio', 'nome_municipio', 'municipio', 'nome', 'name']
 const MUNICIPALITY_CODE_KEYS = ['CD_MUN', 'cd_mun', 'codigo_ibge', 'codigo_municipio', 'co_municipio', 'id']
 
@@ -29,11 +39,17 @@ function findProperty(properties, keys) {
   return null
 }
 
-export default function MapView({ institutions, municipalitiesGeoJson, selectedMunicipality, selectedInstitution, onSelect }) {
+function MapView({ institutions, fitKey = '', municipalitiesGeoJson, selectedMunicipality, selectedInstitution, onSelect }) {
   const containerRef = useRef(null)
   const mapRef = useRef(null)
-  const markersRef = useRef([])
   const [mapReady, setMapReady] = useState(false)
+  const byIdRef = useRef(new globalThis.Map())
+  const onSelectRef = useRef(onSelect)
+  const lastFitKeyRef = useRef('')
+
+  useEffect(() => {
+    onSelectRef.current = onSelect
+  }, [onSelect])
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined
@@ -78,8 +94,6 @@ export default function MapView({ institutions, municipalitiesGeoJson, selectedM
     return () => {
       map.off('load', handleLoad)
       window.removeEventListener('resize', applyMapPadding)
-      markersRef.current.forEach((marker) => marker.remove())
-      markersRef.current = []
       map.remove()
       mapRef.current = null
     }
@@ -223,69 +237,198 @@ export default function MapView({ institutions, municipalitiesGeoJson, selectedM
     return () => { cancelled = true }
   }, [mapReady, selectedMunicipality])
 
+  // Camadas das instituições (criadas uma vez): grupos, contagem, pontos e anel da seleção.
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !mapReady) return
+    if (!map || !mapReady) return undefined
 
-    // Ao abrir o site não há instituições carregadas (só as malhas municipais).
-    // Os pontos aparecem quando um município é escolhido ou uma busca retorna resultados.
-    markersRef.current.forEach((marker) => marker.remove())
-    markersRef.current = []
+    const empty = { type: 'FeatureCollection', features: [] }
+    map.addSource(INST_SOURCE_ID, {
+      type: 'geojson',
+      data: empty,
+      cluster: true,
+      clusterRadius: 45,
+      clusterMaxZoom: CLUSTER_MAX_ZOOM,
+    })
+    map.addSource(PICKED_SOURCE_ID, { type: 'geojson', data: empty })
 
-    const bounds = []
+    map.addLayer({
+      id: INST_CLUSTER_LAYER_ID,
+      type: 'circle',
+      source: INST_SOURCE_ID,
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-color': '#0E7C79',
+        'circle-radius': ['step', ['get', 'point_count'], 16, 10, 20, 50, 26],
+        'circle-stroke-width': 3,
+        'circle-stroke-color': '#ffffff',
+        'circle-opacity': 0.92,
+      },
+    })
+
+    // O número dentro do grupo reaproveita a fonte de texto do estilo do mapa.
+    const labelFont = map.getStyle()?.layers?.find((layer) => layer.type === 'symbol' && layer.layout?.['text-font'])?.layout['text-font']
+    if (labelFont) {
+      map.addLayer({
+        id: INST_COUNT_LAYER_ID,
+        type: 'symbol',
+        source: INST_SOURCE_ID,
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': labelFont,
+          'text-size': 13,
+          'text-allow-overlap': true,
+        },
+        paint: { 'text-color': '#ffffff' },
+      })
+    }
+
+    map.addLayer({
+      id: INST_POINT_LAYER_ID,
+      type: 'circle',
+      source: INST_SOURCE_ID,
+      filter: ['!', ['has', 'point_count']],
+      paint: {
+        'circle-color': ['get', 'cor'],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 9, 4, 13, 7, 16, 10],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
+    })
+
+    map.addLayer({
+      id: PICKED_LAYER_ID,
+      type: 'circle',
+      source: PICKED_SOURCE_ID,
+      paint: {
+        'circle-radius': 15,
+        'circle-color': 'rgba(0, 0, 0, 0)',
+        'circle-stroke-width': 3.5,
+        'circle-stroke-color': '#D88916',
+      },
+    })
+
+    const popup = new Popup({ closeButton: false, closeOnClick: false, offset: 14, className: 'map-hover-popup' })
+
+    const handlePointClick = (event) => {
+      const feature = event.features?.[0]
+      const institution = feature && byIdRef.current.get(feature.properties.id)
+      if (institution) onSelectRef.current(institution)
+    }
+    const handleClusterClick = async (event) => {
+      const feature = event.features?.[0]
+      if (!feature) return
+      try {
+        const zoom = await map.getSource(INST_SOURCE_ID).getClusterExpansionZoom(feature.properties.cluster_id)
+        map.easeTo({ center: feature.geometry.coordinates, zoom: Math.min(zoom + 0.3, 17), duration: 500 })
+      } catch {
+        map.easeTo({ center: feature.geometry.coordinates, zoom: map.getZoom() + 2, duration: 500 })
+      }
+    }
+    const handlePointEnter = (event) => {
+      map.getCanvas().style.cursor = 'pointer'
+      const feature = event.features?.[0]
+      if (feature) popup.setLngLat(feature.geometry.coordinates).setText(feature.properties.nome).addTo(map)
+    }
+    const handleClusterEnter = () => { map.getCanvas().style.cursor = 'pointer' }
+    const handleLeave = () => {
+      map.getCanvas().style.cursor = ''
+      popup.remove()
+    }
+
+    map.on('click', INST_POINT_LAYER_ID, handlePointClick)
+    map.on('click', INST_CLUSTER_LAYER_ID, handleClusterClick)
+    map.on('mouseenter', INST_POINT_LAYER_ID, handlePointEnter)
+    map.on('mouseleave', INST_POINT_LAYER_ID, handleLeave)
+    map.on('mouseenter', INST_CLUSTER_LAYER_ID, handleClusterEnter)
+    map.on('mouseleave', INST_CLUSTER_LAYER_ID, handleLeave)
+
+    return () => {
+      popup.remove()
+      // Se o mapa já foi destruído (desmontagem), não há nada a limpar.
+      if (mapRef.current !== map) return
+      map.off('click', INST_POINT_LAYER_ID, handlePointClick)
+      map.off('click', INST_CLUSTER_LAYER_ID, handleClusterClick)
+      map.off('mouseenter', INST_POINT_LAYER_ID, handlePointEnter)
+      map.off('mouseleave', INST_POINT_LAYER_ID, handleLeave)
+      map.off('mouseenter', INST_CLUSTER_LAYER_ID, handleClusterEnter)
+      map.off('mouseleave', INST_CLUSTER_LAYER_ID, handleLeave)
+    }
+  }, [mapReady])
+
+  // Atualiza os dados quando a lista muda. Nada é destruído nem recriado: só setData.
+  useEffect(() => {
+    const map = mapRef.current
+    const source = map && mapReady ? map.getSource(INST_SOURCE_ID) : null
+    if (!source) return
+
+    const features = []
+    const byId = new globalThis.Map()
+    const coordinates = []
     for (const institution of institutions) {
       const latitude = Number(institution.latitude)
       const longitude = Number(institution.longitude)
       if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) continue
       if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) continue
 
-      const element = document.createElement('button')
-      element.type = 'button'
-      element.className = 'map-marker'
-      element.title = institution.nome || 'Instituição de ensino'
-      element.setAttribute('aria-label', `Ver detalhes de ${institution.nome || 'instituição'}`)
-      element.style.setProperty('--marker-color', getMarkerColor(institution.tipo))
-      element.innerHTML = '<span class="map-marker-pin"><i></i></span>'
-
-      element.addEventListener('click', (event) => {
-        event.stopPropagation()
-        onSelect(institution)
+      const id = String(institution.id)
+      byId.set(id, institution)
+      coordinates.push([longitude, latitude])
+      features.push({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [longitude, latitude] },
+        properties: {
+          id,
+          nome: institution.nome || 'Instituição de ensino',
+          cor: getMarkerColor(institution.tipo),
+        },
       })
-
-      const marker = new Marker({ element, anchor: 'bottom' })
-        .setLngLat([longitude, latitude])
-        .addTo(map)
-
-      markersRef.current.push(marker)
-      bounds.push([longitude, latitude])
     }
+    byIdRef.current = byId
+    source.setData({ type: 'FeatureCollection', features })
 
-    // Enquadra os pontos exibidos (respeitando o padding da sidebar).
-    if (bounds.length === 1) {
-      map.flyTo({ center: bounds[0], zoom: Math.max(map.getZoom(), 13), duration: 600 })
-    } else if (bounds.length > 1) {
-      const lngs = bounds.map((b) => b[0])
-      const lats = bounds.map((b) => b[1])
-      map.fitBounds(
-        [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-        { maxZoom: 14, duration: 600 },
-      )
+    // Enquadra os pontos só quando muda o que foi carregado (município ou busca),
+    // e não a cada filtro de rede/nível, para o mapa não "pular" enquanto o usuário filtra.
+    if (!fitKey || fitKey === lastFitKeyRef.current || coordinates.length === 0) return
+    lastFitKeyRef.current = fitKey
+    if (coordinates.length === 1) {
+      map.flyTo({ center: coordinates[0], zoom: FOCUS_ZOOM, duration: 600 })
+      return
     }
-  }, [institutions, onSelect, mapReady])
+    const lngs = coordinates.map((c) => c[0])
+    const lats = coordinates.map((c) => c[1])
+    map.fitBounds(
+      [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+      { maxZoom: 14, duration: 600 },
+    )
+  }, [institutions, fitKey, mapReady])
 
+  // Instituição selecionada: anel de destaque + voo até ela.
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !mapReady || !selectedInstitution) return
-    const latitude = Number(selectedInstitution.latitude)
-    const longitude = Number(selectedInstitution.longitude)
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return
+    const source = map && mapReady ? map.getSource(PICKED_SOURCE_ID) : null
+    if (!source) return
 
+    const latitude = Number(selectedInstitution?.latitude)
+    const longitude = Number(selectedInstitution?.longitude)
+    if (!selectedInstitution || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      source.setData({ type: 'FeatureCollection', features: [] })
+      return
+    }
+
+    source.setData({
+      type: 'FeatureCollection',
+      features: [{ type: 'Feature', geometry: { type: 'Point', coordinates: [longitude, latitude] }, properties: {} }],
+    })
     map.flyTo({
       center: [longitude, latitude],
-      zoom: Math.max(map.getZoom(), 13),
+      zoom: Math.max(map.getZoom(), FOCUS_ZOOM),
       duration: 700,
     })
   }, [selectedInstitution, mapReady])
 
   return <div className="map-stage" ref={containerRef} />
 }
+
+export default memo(MapView)

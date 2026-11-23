@@ -13,6 +13,7 @@ export default function FilterSidebar({
   return (
     <aside className="sidebar sidebar-left">
       <div className="brand-block">
+        <div className="brand-mark">V</div>
         <div>
           <div className="brand-name">Veltis</div>
           <div className="brand-subtitle">Mapeamento educacional</div>
@@ -59,7 +60,7 @@ export default function FilterSidebar({
               value={filters.municipio}
               onChange={(event) => onChange({ municipio: event.target.value })}
             >
-              <option value="">-</option>
+              <option value="">Todos os municípios</option>
               {municipalities.map((municipio) => (
                 <option key={municipio} value={municipio}>
                   {municipio}
